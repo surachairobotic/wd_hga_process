@@ -1,0 +1,42 @@
+
+roslaunch warehouse_simulation warehouse_navigation.launch map_file:=/home/probook/catkin_ws/src/maps/warehouse_gmapping.yaml
+
+  <node pkg="tf" type="static_transform_publisher" name="map_base_publisher" args="0 0 0 0 0 0 1  map base_footprint  100"/>
+  <node pkg="tf" type="static_transform_publisher" name="base_odom_publisher" args="0 0 0 0 0 0 1  base_footprint odom  100"/>
+
+=== Mir Wifi Password ===
+mirex4you
+=== Find robot ip address ===
+ifconfig
+nmap -sP 192.168.12.0/24
+
+=== Server on ===
+python -m uvicorn wd_rest_server:app --reload --host 0.0.0.0
+
+=== ros2 ===
+ros2 pkg create --build-type ament_cmake ament_python --node-name my_node my_package
+
+colcon build --packages-select wd_hga_process
+
+=== REST API ===
+curl -X GET "http://192.168.12.20/api/v2.0.0/registers" -H  "accept: application/json" -H  "Authorization: Basic YWRtaW46OGM2OTc2ZTViNTQxMDQxNWJkZTkwOGJkNGRlZTE1ZGZiMTY3YTljODczZmM0YmI4YTgxZjZmMmFiNDQ4YTkxOA==" -H  "Accept-Language: en_US"
+
+curl -X POST "http://192.168.12.20/api/v2.0.0/robots" -H  "accept: application/json" -H  "Authorization: Basic YWRtaW46OGM2OTc2ZTViNTQxMDQxNWJkZTkwOGJkNGRlZTE1ZGZiMTY3YTljODczZmM0YmI4YTgxZjZmMmFiNDQ4YTkxOA==" -H  "Accept-Language: en_US" -H  "Content-Type: application/json" -d "{  \"robots\": [    {}  ]}"
+
+[{
+	"url": "/v2.0.0/missions/8e7f9944-ba8a-11ec-b20b-0001299a3e90",
+	"guid": "8e7f9944-ba8a-11ec-b20b-0001299a3e90",
+	"name": "circle_1"
+}, {
+	"url": "/v2.0.0/missions/be4da03e-c876-11ec-8696-0001299a3e90",
+	"guid": "be4da03e-c876-11ec-8696-0001299a3e90",
+	"name": "GoTo_Pos_1"
+}, {
+	"url": "/v2.0.0/missions/d9dc1dba-c876-11ec-8696-0001299a3e90",
+	"guid": "d9dc1dba-c876-11ec-8696-0001299a3e90",
+	"name": "GoTo_Pos_2"
+}, {
+	"url": "/v2.0.0/missions/ea86df57-c876-11ec-8696-0001299a3e90",
+	"guid": "ea86df57-c876-11ec-8696-0001299a3e90",
+	"name": "GoTo_Pos_3"
+}]

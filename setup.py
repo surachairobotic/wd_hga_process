@@ -13,14 +13,15 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='probook',
-    maintainer_email='probook@todo.todo',
+    maintainer='Surachai Rodsai',
+    maintainer_email='surachairobotic@gmail.com',
     description='TODO: Package description',
-    license='TODO: License declaration',
+    license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'wd_mir = wd_hga_process.wd_mir:main'
+            'wd_mir = wd_hga_process.wd_mir:main',
+            'wd_webserver = wd_hga_process.wd_webserver:main'
         ],
     },
 )

@@ -4,8 +4,11 @@
   <name>wd_hga_process</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="probook@todo.todo">probook</maintainer>
-  <license>TODO: License declaration</license>
+  <maintainer email="surachairobotic@gmail.com">Surachai Rodsai</maintainer>
+  <license>Apache License 2.0</license>
+
+	<exec_depend>rclpy</exec_depend>
+	<exec_depend>std_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
