@@ -2,8 +2,13 @@
 ros2 pkg create --build-type ament_cmake ament_python --node-name my_node my_package
 colcon build --symlink-install --packages-select wd_hga_process
 
+=== terminal ===
 . install/local_setup.sh
+python -m uvicorn wd_webserver:app --reload --host 0.0.0.0
 ros2 run wd_hga_process wd_mir
+python btncall_gui.py
+ros2 topic echo /mir/robot_state
+ros2 topic echo /mir/btn_call
 
 roslaunch warehouse_simulation warehouse_navigation.launch map_file:=/home/probook/catkin_ws/src/maps/warehouse_gmapping.yaml
 
