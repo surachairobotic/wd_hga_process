@@ -1,3 +1,9 @@
+=== ros2 ===
+ros2 pkg create --build-type ament_cmake ament_python --node-name my_node my_package
+colcon build --symlink-install --packages-select wd_hga_process
+
+. install/local_setup.sh
+ros2 run wd_hga_process wd_mir
 
 roslaunch warehouse_simulation warehouse_navigation.launch map_file:=/home/probook/catkin_ws/src/maps/warehouse_gmapping.yaml
 
@@ -12,11 +18,8 @@ nmap -sP 192.168.12.0/24
 
 === Server on ===
 python -m uvicorn wd_rest_server:app --reload --host 0.0.0.0
+python -m uvicorn wd_webserver:app --reload --host 0.0.0.0
 
-=== ros2 ===
-ros2 pkg create --build-type ament_cmake ament_python --node-name my_node my_package
-
-colcon build --packages-select wd_hga_process
 
 === REST API ===
 curl -X GET "http://192.168.12.20/api/v2.0.0/registers" -H  "accept: application/json" -H  "Authorization: Basic YWRtaW46OGM2OTc2ZTViNTQxMDQxNWJkZTkwOGJkNGRlZTE1ZGZiMTY3YTljODczZmM0YmI4YTgxZjZmMmFiNDQ4YTkxOA==" -H  "Accept-Language: en_US"

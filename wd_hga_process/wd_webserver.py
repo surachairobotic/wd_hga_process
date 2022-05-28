@@ -1,16 +1,16 @@
-import rclpy
-from wd_hga_process.mir import *
-
 from fastapi import FastAPI, Request
 import json, socket
 import uvicorn
 
-node = ''
+robotstate = 'Not Set.'
+
 app = FastAPI()
 
 @app.get("/")
-async def root(self):
-    return {"message": "Hello World"}
+async def root():
+    global robotstate
+    print('root -> robotstate : ' + robotstate)
+    return {"message": robotstate}
 
 @app.post('/btn_call')
 async def get_info(info: Request): # var_name: var_type
@@ -33,20 +33,16 @@ async def get_info(info: Request): # var_name: var_type
         "data" : req_info
     }
 
-def main(args=None):
-    global node
-    print('Hi from wd_webserver.')
-    rclpy.init(args=args)
-    node = rclpy.create_node('wd_webserver')
-    #uvicorn.run("wd_hga_process.wd_webserver:main", host="0.0.0.0", port=8000, reload=False)
-        
-    rclpy.spin(node)
+@app.post('/set_robotstate')
+async def get_info(info: Request): # var_name: var_type
+    global robotstate
+    req_info = await info.json()
+    print(req_info['state'])
+    robotstate = req_info['state']
+    print('robotstate : ' + robotstate)
+    status = 'SUCCESS'
+    return {
+        "status" : status,
+        "data" : req_info
+    }
 
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    node.destroy_node()
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
