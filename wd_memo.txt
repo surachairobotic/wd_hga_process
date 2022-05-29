@@ -6,7 +6,7 @@ colcon build --symlink-install --packages-select wd_hga_process
 . install/local_setup.sh
 python -m uvicorn wd_webserver:app --reload --host 0.0.0.0
 ros2 run wd_hga_process wd_mir
-python btncall_gui.py
+python ~/dev_ws/src/wd_hga_process/wd_hga_process/btncall_gui.py
 ros2 topic echo /mir/robot_state
 ros2 topic echo /mir/btn_call
 

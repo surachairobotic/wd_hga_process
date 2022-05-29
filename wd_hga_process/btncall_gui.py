@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-import requests
+import requests, threading, time, json
 
 def sendJson(num):
     # Get Request
@@ -60,6 +60,32 @@ class MainWindow(PageWindow):
         print(str(name + " 2"))
         self.initUI()
         self.setWindowTitle("MainWindow")
+        self.feet_ip = '0.0.0.0:8000'
+        self.bThread = True
+        self.threadStatus = threading.Thread(target=self.getStatusThreadRun)
+        self.threadStatus.start()
+        
+    def __del__(self):
+        print('MainWindow del')
+        self.bThread = False
+        self.threadStatus.join()
+
+    def getStatusThreadRun(self):
+        # Format Headers
+        self.headers = {}
+        self.headers['Content-Type'] = 'application/json'
+        self.headers['Authorization'] = 'Basic YWRtaW46OGM2OTc2ZTViNTQxMDQxNWJkZTkwOGJkNGRlZTE1ZGZiMTY3YTljODczZmM0YmI4YTgxZjZmMmFiNDQ4YTkxOA=='
+        print(self.headers)
+
+        while self.bThread:
+            _host = 'http://' + self.feet_ip + '/robotstate'
+            get_status = requests.get(_host, headers=self.headers)
+            #print(get_status)
+            parsed = json.loads(get_status.content)            
+            res = str(parsed['message'])
+            #print('res : ' + res)
+            self.robotstateLabel.setText(res)
+            time.sleep(1.0)
 
     def initUI(self):
         self.UiComponents()
@@ -79,6 +105,8 @@ class MainWindow(PageWindow):
 
         btn_2 = QtWidgets.QPushButton("GOTO_3")
         btn_2.setStyleSheet("background-color: yellow")
+        
+        self.robotstateLabel = QtWidgets.QLabel("Robot Status : READY")
 
         hLayout = QtWidgets.QHBoxLayout()
         hLayout.addWidget(pWidgets(btn_1, lambda: sendJson(2)), 1)
@@ -87,7 +115,7 @@ class MainWindow(PageWindow):
         vLayout = QtWidgets.QVBoxLayout()
         vLayout.addWidget(pWidgets(btn_call, lambda: sendJson(1)), 1)
         vLayout.addLayout(hLayout, 1)
-        vLayout.addWidget(pWidgets(QtWidgets.QLabel("Robot Status : READY")), 1)
+        vLayout.addWidget(pWidgets(self.robotstateLabel), 1)
 
         wdg = QtWidgets.QWidget()
         wdg.setLayout(vLayout)

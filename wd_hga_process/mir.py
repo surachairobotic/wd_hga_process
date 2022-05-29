@@ -24,7 +24,7 @@ class MiR():
     def __del__(self):
         print('MiR del')
         self.bThread = False
-        #self.threadStatus.join()
+        self.threadStatus.join()
         self.threadBtnCall.join()
     
     def robotstateThreadInit(self):
@@ -37,8 +37,8 @@ class MiR():
         self.headers['Authorization'] = 'Basic YWRtaW46OGM2OTc2ZTViNTQxMDQxNWJkZTkwOGJkNGRlZTE1ZGZiMTY3YTljODczZmM0YmI4YTgxZjZmMmFiNDQ4YTkxOA=='
         print(self.headers)
         
-        #self.threadStatus = threading.Thread(target=self.robotstateThreadRun)
-        #self.threadStatus.start()
+        self.threadStatus = threading.Thread(target=self.robotstateThreadRun)
+        self.threadStatus.start()
         
     def robotstateThreadRun(self):
         while self.bThread:
@@ -73,9 +73,10 @@ class MiR():
             parsed = json.loads(get_status.content)            
             res = String()
             res.data = str(parsed['call_id'])
-            print('res.data : ' + res.data)
+            #print('res.data : ' + res.data)
             if int(res.data) != -1:
                 self.pub_btncall.publish(res)
+                self.goto_pos(int(res.data))
             time.sleep(0.5)
 
 
