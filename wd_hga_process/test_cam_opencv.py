@@ -19,7 +19,7 @@ def main():
         # desired button of your choice
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        print('FPS : ' + str(time.time()-t))
+        print('FPS : ' + str(1.0/(time.time()-t)))
       
     # After the loop release the cap object
     vid.release()

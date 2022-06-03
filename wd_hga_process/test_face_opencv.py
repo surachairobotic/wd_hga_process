@@ -26,7 +26,7 @@ def main():
         k = cv2.waitKey(30) & 0xff
         if k==27:
             break
-        print('FPS : ' + str(time.time()-t))
+        print('FPS : ' + str(1.0/(time.time()-t)))
     # Release the VideoCapture object
     cap.release()
 
