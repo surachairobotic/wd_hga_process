@@ -17,7 +17,7 @@ class MiR():
         #self.timer = self.node.create_timer(0.02, self.timer_callback)
         #self.i = 0
         
-        self.feet_ip = '0.0.0.0:8000'
+        self.feet_ip = '192.168.8.173:8000'
         self.robotstateThreadInit()
         self.btncallThreadInit()
 
