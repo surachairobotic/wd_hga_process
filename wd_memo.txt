@@ -1,3 +1,7 @@
+=== monitor ===
+https://askubuntu.com/questions/453109/add-fake-display-when-no-monitor-is-plugged-in
+
+
 === ros2 ===
 ros2 pkg create --build-type ament_cmake ament_python --node-name my_node my_package
 colcon build --symlink-install --packages-select wd_hga_process
