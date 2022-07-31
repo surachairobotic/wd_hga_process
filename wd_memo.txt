@@ -10,9 +10,11 @@ colcon build --symlink-install --packages-select wd_hga_process
 . install/local_setup.sh
 python -m uvicorn wd_webserver:app --reload --host 0.0.0.0
 ros2 run wd_hga_process wd_mir
+ros2 run wd_hga_process wd_ur
 python ~/dev_ws/src/wd_hga_process/wd_hga_process/btncall_gui.py
 ros2 topic echo /mir/robot_state
 ros2 topic echo /mir/btn_call
+
 
 roslaunch warehouse_simulation warehouse_navigation.launch map_file:=/home/probook/catkin_ws/src/maps/warehouse_gmapping.yaml
 
@@ -52,3 +54,23 @@ curl -X POST "http://192.168.12.20/api/v2.0.0/robots" -H  "accept: application/j
 	"guid": "ea86df57-c876-11ec-8696-0001299a3e90",
 	"name": "GoTo_Pos_3"
 }]
+
+
+
+
+UR control node
+
+1. ใช้ python ส่งคำสั่ง URScript
+   - ควบคุมหุ่นยนต์ได้
+   - อ่านค่า robot status ไม่ได้ [https://forum.universal-robots.com/t/decode-return-value/18631]
+   - ยังคุยกับ gripper ไม่ได้
+2. ใช้ library ใน github ชื่อ python-urx [https://github.com/SintefManufacturing/python-urx]
+   - ควบคุมหุ่นยนต์ได้
+   - อ่านค่าได้
+   - ควบคุม gripper ได้
+   - แต่ใช้ไปสักพักก็จะ error และต้อง reconnect 4-5 ครั้ง ถึงจะเชื่อมต่อได้ใหม่
+3. ใช้ MoveIt! ของ ROS2
+   - อ่านค่าได้
+   - ควบคุม UR, Gripper ยังไม่ได้
+   - ใช้ไปสักพักก็จะ error
+   

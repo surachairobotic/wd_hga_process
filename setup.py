@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'wd_ur = wd_hga_process.wd_ur:main',
             'wd_mir = wd_hga_process.wd_mir:main',
             'wd_webserver = wd_hga_process.wd_webserver:main'
         ],
