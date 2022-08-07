@@ -88,14 +88,17 @@ class MiR():
     def cb_btn(self, msg):
         print('msg: ', msg.data)
         pnt = int(msg.data)
-        if pnt > 0 and pnt <= 4:
+        if pnt > 0 and pnt <= 6:
             self.goto_pos(pnt)
 
     def goto_pos(self, _num):
         pos = [ 'be4da03e-c876-11ec-8696-0001299a3e90',
                 'd9dc1dba-c876-11ec-8696-0001299a3e90',
                 'ea86df57-c876-11ec-8696-0001299a3e90',
-                '80ac3e98-0e63-11ed-843d-0001299a3e90' ]
+                '80ac3e98-0e63-11ed-843d-0001299a3e90',
+                'bdffb631-15bb-11ed-ae82-0001299a3e90',
+                'd74f2c17-15bb-11ed-ae82-0001299a3e90',
+ ]
         mission_id = {"mission_id": pos[_num-1]}
 
         # Get Request

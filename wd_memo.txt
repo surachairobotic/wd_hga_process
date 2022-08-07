@@ -1,6 +1,12 @@
 === monitor ===
 https://askubuntu.com/questions/453109/add-fake-display-when-no-monitor-is-plugged-in
 
+b station
+find crystal
+y+ 4
+g-
+ur back home
+
 
 === ros2 ===
 ros2 pkg create --build-type ament_cmake ament_python --node-name my_node my_package
@@ -14,7 +20,7 @@ ros2 run wd_hga_process wd_ur
 python ~/dev_ws/src/wd_hga_process/wd_hga_process/btncall_gui.py
 ros2 topic echo /mir/robot_state
 ros2 topic echo /mir/btn_call
-
+ros2 topic pub /mir/btn_call std_msgs/String "data: 5"
 
 roslaunch warehouse_simulation warehouse_navigation.launch map_file:=/home/probook/catkin_ws/src/maps/warehouse_gmapping.yaml
 
