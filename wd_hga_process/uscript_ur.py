@@ -1,4 +1,6 @@
 import time, keyboard
+import socket, cv2, pickle, struct
+import numpy as np
 from ur_socket import *
 
 # Gripper Variables
@@ -42,8 +44,89 @@ def main(args=None):
     exit()
     '''
     
-    fw = 1
-    if fw == 1:
+    '''
+    0 = 8
+    0.1865 = -290
+    '''
+    
+    fw = 0
+    if fw == 0:
+        ur.moveLine(pp[2], 0.05)
+        #time.sleep(5)
+        #exit()
+        # create socket
+        client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        host_ip = '192.168.8.136' # paste your server ip address here
+        print('Enter port : ')
+        port = int(input())
+        client_socket.connect((host_ip,port)) # a tuple
+        data = b""
+        payload_size = struct.calcsize("Q")
+        state = '*'
+        while True:
+            t = time.time()
+            while len(data) < payload_size:
+                packet = client_socket.recv(4*1024) # 4K
+                if not packet: break
+                data+=packet
+            packed_msg_size = data[:payload_size]
+            data = data[payload_size:]
+            msg_size = struct.unpack("Q",packed_msg_size)[0]
+	        
+            while len(data) < msg_size:
+                data += client_socket.recv(4*1024)
+            frame_data = data[:msg_size]
+            data  = data[msg_size:]
+            frame = pickle.loads(frame_data)
+            frame2, err = colorDetection(frame)
+            cv2.imshow("RECEIVING VIDEO", frame2)
+            #err += 47
+            print(err)
+
+            if abs(err) < 1:
+                ur.stop()
+                state = '*'
+            #    break
+            else:
+                '''
+                y = (-0.000625838926174*err) - 0.04
+                end = pp[2]
+                end[0] = pp[2][0] + y
+                print(err, " : ", y, " : ", end[0])
+                ur.moveLine(end, 0.05)
+                input()
+                end[1] += 0.21
+                ur.moveLine(end, 0.05)
+                break
+                '''
+
+                print('state : ', state)
+                end = pp[2]
+                if err > 0:
+                    if state != '+':
+                        end[0] = pp[2][0] - 1.0
+                        print('move -1.0')
+                        ur.moveLine(end, 0.02)
+                        state = '+'
+                else:
+                    if state != '-':
+                        print('move +1.0')
+                        end[0] = pp[2][0] + 1.0
+                        ur.moveLine(end, 0.02)
+                        state = '-'
+
+            #print('FPS : ' + str(1.0/(time.time()-t)))
+            key = cv2.waitKey(1) & 0xFF
+            if key  == ord('q'):
+                break
+        client_socket.close()
+        '''
+        end = pp[2]
+        end[0] += 0.1865
+        ur.moveLine(end)
+        '''
+
+    elif fw == 1:
         ur.moveJ(jj[0])
         input()
         ur.moveJ(jj[1])
@@ -59,17 +142,24 @@ def main(args=None):
         input()
         ur.moveJ(jj[0])
         # G+
-    elif fw == 2:
+    elif fw == 2: # back
         ur.moveJ(jj[2])
         input()
         ur.moveLine(pp[1])
         input()
         ur.moveJ(jj[0])
-    elif fw == 3:
+    elif fw == 3: # forward
         ur.moveLine(pp[1])
         input()
         ur.moveJ(jj[0])    
+    elif fw == 10: # forward
+        ur.moveJ(jj[0])
+        input()
+        ur.moveJ(jj[1])
+        input()
+        ur.moveLine(pp[2])
     #print(ur.read())
+    ur.stop()
     exit()
 
 
@@ -151,6 +241,72 @@ def main(args=None):
 def deg2rad(_in):
     _out = [(j/180.0*3.14) for j in _in]
     return _out
+
+def colorDetection(img):
+    height, width, channels = img.shape
+
+    # convert to hsv colorspace
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    hsv = cv2.blur(hsv, (10,10)) 
+
+    # lower bound and upper bound for Green color
+    #lower_bound = np.array([50,50,50])
+    #upper_bound = np.array([150,255,255])
+
+    # lower bound and upper bound for Red color
+    lower_bound = np.array([90,100,75])
+    upper_bound = np.array([100,255,255])
+
+    # find the colors within the boundaries
+    mask = cv2.inRange(hsv, lower_bound, upper_bound)
+    mask = cv2.erode(mask, np.ones((5, 5), dtype=np.uint8))
+    mask = cv2.dilate(mask, np.ones((5, 5), dtype=np.uint8))
+    
+    # Now you can finally find contours.
+    contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    final_contours = 0
+    final_area = 6000
+    bNotDetect = True
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area > final_area:
+            final_contours = contour
+            final_area = area
+            bNotDetect = False
+
+    print(final_area)
+    if bNotDetect:
+        return img, 0
+    x, y, w, h = cv2.boundingRect(final_contours)
+    #print(x, " ", y, " ", w, " ", h)
+    cx = int(w/2.0+x)
+    cy = int(h/2.0+y)
+
+    # Center coordinates
+    center_coordinates = (cx, cy)
+     
+    # Radius of circle
+    radius = 2
+      
+    # Blue color in BGR
+    color = (0, 255, 255)
+      
+    # Line thickness of 2 px
+    thickness = 2
+      
+    # Using cv2.circle() method
+    # Draw a circle with blue line borders of thickness of 2 px
+    img = cv2.circle(img, center_coordinates, radius, color, thickness)
+
+    #for i in range(len(final_contours)):
+    #cv2.drawContours(img, final_contours, i, np.array([50, 250, 50]), 4)
+    cv2.drawContours(image=img, contours=final_contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
+
+    #res = cv2.bitwise_and(img, img, mask=mask)
+    err = int(width/2.0) - cx
+
+    return img, err+47
 
 if __name__ == '__main__':
     main()

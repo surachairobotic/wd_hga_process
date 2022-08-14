@@ -34,16 +34,16 @@ class UR_SOCKET():
         msg = 'stopj(2)'
         self.send(msg)
     
-    def moveLine(self, p):
+    def moveLine(self, p, v):
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
-        msg = 'movep(p[{}],a=0.1,v=0.15,r=0)'.format(pose)
-        print(msg)
+        msg = 'movep(p[{}],a=0.1,v={},r=0)'.format(pose, v)
+        #print(msg)
         self.send(msg)
 
     def moveJ(self, p):
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
         msg = 'movej([{}],a=0.5,v=0.5,t=0,r=0)'.format(pose)
-        print(msg)
+        #print(msg)
         self.send(msg)
         
     '''
