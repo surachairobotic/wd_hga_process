@@ -1,11 +1,7 @@
 === monitor ===
 https://askubuntu.com/questions/453109/add-fake-display-when-no-monitor-is-plugged-in
 
-b station
-find crystal
-y+ 4
-g-
-ur back home
+=== notebook ===
 
 
 === ros2 ===
