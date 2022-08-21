@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'wd_ur = wd_hga_process.wd_ur:main',
             'wd_mir = wd_hga_process.wd_mir:main',
+            'wd_collision = wd_hga_process.wd_collision:main',
             'wd_webserver = wd_hga_process.wd_webserver:main'
         ],
     },
