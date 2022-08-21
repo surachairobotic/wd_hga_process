@@ -21,7 +21,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.conditions import IfCondition
 
-FPS = '30.0'
+FPS = '6.0'
 IMU_FPS = '-1.'
 WIDTH = '1280'
 HEIGHT = '720'
