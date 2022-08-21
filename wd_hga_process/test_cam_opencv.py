@@ -3,14 +3,14 @@ import cv2, time
   
 def main():
     # define a video capture object
-    vid = cv2.VideoCapture(4)
+    vid = cv2.VideoCapture(6)
       
     while(True):
         t = time.time()
         # Capture the video frame
         # by frame
         ret, frame = vid.read()
-      
+        #frame = cv2.resize(frame, (800, 600))      
         # Display the resulting frame
         cv2.imshow('frame', frame)
           
