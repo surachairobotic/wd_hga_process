@@ -21,7 +21,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.conditions import IfCondition
 
-FPS = '30.0'
+FPS = '7.0'
 IMU_FPS = '-1.'
 WIDTH = '1280'
 HEIGHT = '720'
@@ -46,7 +46,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'infra_height',                 'default': HEIGHT, 'description': 'infra width'},
                            {'name': 'enable_infra1',                'default': 'true', 'description': 'enable infra1 stream'},
                            {'name': 'enable_infra2',                'default': 'true', 'description': 'enable infra2 stream'},
-                           {'name': 'infra_rgb',                    'default': 'false', 'description': 'enable infra2 stream'},
+                           {'name': 'infra_rgb',                    'default': 'true', 'description': 'enable infra2 stream'},
                            {'name': 'fisheye_width',                'default': WIDTH, 'description': 'fisheye width'},
                            {'name': 'fisheye_height',               'default': HEIGHT, 'description': 'fisheye width'},
                            {'name': 'enable_fisheye1',              'default': 'true', 'description': 'enable fisheye1 stream'},
@@ -69,16 +69,16 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'pointcloud_qos',               'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
                            {'name': 'enable_gyro',                  'default': 'true', 'description': ''},
                            {'name': 'enable_accel',                 'default': 'true', 'description': ''},
-                           {'name': 'pointcloud_texture_stream',    'default': 'RS2_STREAM_COLOR', 'description': 'testure stream for pointcloud'},
+                           {'name': 'pointcloud_texture_stream',    'default': 'RS2_STREAM_ANY', 'description': 'testure stream for pointcloud'},
                            {'name': 'pointcloud_texture_index',     'default': '0', 'description': 'testure stream index for pointcloud'},
-                           {'name': 'enable_sync',                  'default': 'false', 'description': ''},
+                           {'name': 'enable_sync',                  'default': 'true', 'description': ''},
                            {'name': 'align_depth',                  'default': 'true', 'description': ''},
                            {'name': 'filters',                      'default': 'pointcloud', 'description': ''},
                            {'name': 'clip_distance',                'default': '-2.', 'description': ''},
                            {'name': 'linear_accel_cov',             'default': '0.01', 'description': ''},
                            {'name': 'initial_reset',                'default': 'false', 'description': ''},
                            {'name': 'allow_no_texture_points',      'default': 'false', 'description': ''},
-                           {'name': 'ordered_pc',                   'default': 'false', 'description': ''},
+                           {'name': 'ordered_pc',                   'default': 'true', 'description': ''},
                            {'name': 'calib_odom_file',              'default': "''", 'description': "''"},
                            {'name': 'topic_odom_in',                'default': "''", 'description': 'topic for T265 wheel odometry'},
                            {'name': 'tf_publish_rate',              'default': '0.0', 'description': 'Rate of publishing static_tf'},

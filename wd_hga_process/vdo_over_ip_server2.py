@@ -36,7 +36,7 @@ def main():
   width = int(vid.get(3)/devide)
   height = int(vid.get(4)/devide)
   print(width, " : ", height)
-  exit()
+  #exit()
   while( vid.isOpened() ):
     t = time.time()
     #print('Press q to exit and p for continue.')
