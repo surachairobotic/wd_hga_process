@@ -26,6 +26,7 @@ setup(
             'wd_ur = wd_hga_process.wd_ur:main',
             'wd_mir = wd_hga_process.wd_mir:main',
             'wd_collision = wd_hga_process.wd_collision:main',
+            'wd_cam = wd_hga_process.wd_cam:main',
             'change_image_frame = wd_hga_process.change_image_frame:main',
             'dynamic_frame = wd_hga_process.dynamic_frame_tf2_broadcaster:main',
             'wd_webserver = wd_hga_process.wd_webserver:main'

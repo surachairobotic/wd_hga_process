@@ -1,3 +1,8 @@
+=== ham get image ===
+ros2 launch realsense2_camera rs_launch.py
+ros2 run wd_hga_process wd_cam
+**  /home/cmit/dev_ws/ham_image  **
+
 === monitor ===
 https://askubuntu.com/questions/453109/add-fake-display-when-no-monitor-is-plugged-in
 
@@ -9,6 +14,7 @@ ros2 pkg create --build-type ament_cmake ament_python --node-name my_node my_pac
 ros2 pkg create --build-type ament_cmake --node-name pc2_process pc_handle
 colcon build --symlink-install --packages-select wd_hga_process
 colcon build --symlink-install --packages-select pc_handle
+colcon build --symlink-install --packages-select imu_tools
 
 === terminal ===
 . install/local_setup.sh

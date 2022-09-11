@@ -87,9 +87,9 @@ def main():
         frame_data = data[:msg_size]
         data  = data[msg_size:]
         frame = pickle.loads(frame_data)
-        frame2, err = colorDetection(frame)
-        print(err)
-        cv2.imshow("RECEIVING VIDEO", frame2)
+        #frame2, err = colorDetection(frame)
+        #print(err)
+        cv2.imshow("RECEIVING VIDEO", frame)
         #print('FPS : ' + str(1.0/(time.time()-t)))
         key = cv2.waitKey(1) & 0xFF
         if key  == ord('q'):
