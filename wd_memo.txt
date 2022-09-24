@@ -1,6 +1,9 @@
+RuntimeError: Couldn't load custom C++ ops. This can happen if your PyTorch and torchvision versions are incompatible, or if you had errors while compiling torchvision from source. For further information on the compatible versions, check https://github.com/pytorch/vision#installation for the compatibility matrix. Please check your PyTorch version with torch.__version__ and your torchvision version with torchvision.__version__ and verify if they are compatible, and if not please reinstall torchvision so that it matches your PyTorch install.
+
 === ham get image ===
 ros2 launch realsense2_camera rs_launch.py
-ros2 run wd_hga_process wd_cam
+ros2 run wd_hga_process wd_cam   # for save rgb_detect.png
+ros2 run wd_hga_process wd_detector  # copy rgb_detect.png to rgb_detect2.png and detect
 **  /home/cmit/dev_ws/ham_image  **
 
 === monitor ===

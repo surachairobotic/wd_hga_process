@@ -15,7 +15,7 @@ class IMAGE():
         self.sub_rgb = self.node.create_subscription(Image, '/camera/color/image_raw', self.cb_img, 10)
         self.sub_depth = self.node.create_subscription(Image, '/camera/depth/image_rect_raw', self.cb_depth, 10)
         
-        self.timer = self.node.create_timer(2.0, self.timer_callback)
+        self.timer = self.node.create_timer(1.0, self.timer_callback)
         self.i = 0
         self.rgb_i = 0
 
@@ -107,7 +107,7 @@ class IMAGE():
     def timer_callback(self):
         print('timer_cb : {}'.format(self.i))
         
-        #cv2.imwrite(self.path + 'rgb_detect.png', self.rgb_frame)
+        cv2.imwrite(self.path + 'rgb_detect.png', self.rgb_frame)
         #out = cv2.imread(self.path + 'rgb_detect.png')
 
         #model = torch.hub.load('/home/cmit/yolov5/', 'custom', path='/home/cmit/yolov5/best_top.pt', source='local')
@@ -118,11 +118,11 @@ class IMAGE():
         #cv2.imshow("Yolo", out2)
         #cv2.waitKey(1)
 
-        cv2.imwrite(self.path + 'rgb_{}.png'.format(self.i), self.rgb_frame)
+        #cv2.imwrite(self.path + 'rgb_{}.png'.format(self.i), self.rgb_frame)
         #cv2.imwrite(self.path + 'grey_{}.png'.format(self.i), self.depth_frame)
         
         ##np.savetxt(self.path + 'rgb_{}.csv'.format(self.i), self.rgb_frame, delimiter=",")
-        np.savetxt(self.path + 'grey_{}.csv'.format(self.i), self.depth_data, delimiter=",")
+        #np.savetxt(self.path + 'grey_{}.csv'.format(self.i), self.depth_data, delimiter=",")
 
         #cv2.imshow("detect", out)
         #cv2.waitKey(1)
