@@ -15,7 +15,7 @@ class DETECTOR():
     def __init__(self, node):
         self.node = node
 
-        self.model = torch.hub.load('/home/cmit/yolov5/', 'custom', path='/home/cmit/yolov5/best_top.pt', source='local')
+        self.model = torch.hub.load('/home/cmit/yolov5/', 'custom', path='/home/cmit/yolov5/best_top_TINY.pt', source='local')
 
         self.timer = self.node.create_timer(2.0, self.timer_callback)
         self.i = 0
@@ -30,13 +30,27 @@ class DETECTOR():
         src = self.path + 'rgb_detect.png'
         dest = self.path + 'rgb_detect2.png'
         shutil.copy2(src, dest)
-        out = cv2.imread(dest)
+        print(dest)
+        print(type(dest))
+        try:
+            out = cv2.imread(dest)
+            scale = 1.0
+            w = int(out.shape[1] * scale)
+            h = int(out.shape[0] * scale)
+            dim = (w, h)
+            print(dim)
+            
+            resized = cv2.resize(out, dim)
+        except Exception as e:
+            print(e)
+            return False
+
         print(type(out))
         if out is None:
-            pass
+            return False
         else:
             try:
-                out2 = self.model(out)
+                out2 = self.model(resized)
                 #out2.show()
 
                 if len(out2.xyxy[0]) != 0:
@@ -50,13 +64,13 @@ class DETECTOR():
                     end_point = (x2, y2)
                     color = (255, 255, 0)
                     thickness = 2
-                    out = cv2.rectangle(out, start_point, end_point, color, thickness)
-                    print(out.shape)
+                    resized = cv2.rectangle(resized, start_point, end_point, color, thickness)
+                    print(resized.shape)
             except Exception as e:
                 print(e)
 
         try:
-            cv2.imshow("detect", out)
+            cv2.imshow("detect", resized)
             cv2.waitKey(1)
         except Exception as e:
             print(e)
