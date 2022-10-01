@@ -60,32 +60,6 @@ class DETECTOR():
                     x2=int((bbox.data[0][2]).item())
                     y2=int((bbox.data[0][3]).item())
                     print([x1,y1,x2,y2])
-                    #############################
-                    center_x=x1+(x2-x1)/2
-                    center_y=y1+(y2-y1)/2
-                    ideal_start_point =(344,99)
-                    ideal_end_point =(747,434)
-                    color_ideal=(255,0,0)
-                    resized=cv2.rectangle(resized, ideal_start_point,  ideal_end_point,color_ideal, 5)
-                    #############################
-                    area_detect=(x2-x1)*(y2-y1)
-                    area_ideal=(ideal_end_point[0]-ideal_start_point[0])*(ideal_end_point[1]-ideal_start_point[1])
-                    if (abs(area_ideal-area_detect)/area_ideal)*100 >10 : 
-                         if area_detect>area_ideal:
-                            print("too close")
-                         if area_detect<area_ideal:
-                            print("too far")   
-                    if (abs(area_ideal-area_detect)/area_ideal)*100 <10:
-                        print("OK")
-                        if abs(x1-ideal_start_point[0])>20:
-                            print('move left')
-                        elif abs(x2-ideal_end_point[0])>20:
-                            print('move right')
-                        if abs(y1-ideal_start_point[1])>20:
-                            print('move up')
-                        elif abs(y2-ideal_start_point[1])>20:
-                            print('move down')
-                    #############################
                     start_point = (x1, y1)
                     end_point = (x2, y2)
                     color = (255, 255, 0)

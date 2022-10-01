@@ -21,6 +21,8 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.conditions import IfCondition
 
+# ros2 launch realsense2_camera rs_launch.py depth_width:=640 color_width:=640 depth_height:=480 color_height:=480 depth_fps:=30.0 color_fps:=30.0
+
 FPS = '7.0'
 IMU_FPS = '-1.'
 WIDTH = '1280'

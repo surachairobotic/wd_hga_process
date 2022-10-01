@@ -1,8 +1,7 @@
 # lets make the client code
 import socket, cv2, pickle, struct, time
 import numpy as np
-import torch
-from PIL import Image, ImageFont, ImageDraw
+
 def colorDetection(img):
     height, width, channels = img.shape
 
@@ -58,20 +57,19 @@ def colorDetection(img):
     #for i in range(len(final_contours)):
     #cv2.drawContours(img, final_contours, i, np.array([50, 250, 50]), 4)
     cv2.drawContours(image=img, contours=final_contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-                 
+
+    #res = cv2.bitwise_and(img, img, mask=mask)
+    err = int(width/2.0) - cx
+
     return img, err
 
 def main():
     # create socket
-    ############################################
-    model = torch.hub.load('/home/cmit/yolov5/', 'custom', path='/home/cmit/yolov5/best_top_TINY.pt', source='local')
-    print("model load DONE")
-    ###########################################
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     host_ip = '192.168.12.253' # paste your server ip address here
     print('Enter port : ')
     port = int(input())
-    client_socket.connect((host_ip, port)) # a tuple
+    client_socket.connect((host_ip,port)) # a tuple
     data = b""
     payload_size = struct.calcsize("Q")
     while True:
@@ -89,24 +87,6 @@ def main():
         frame_data = data[:msg_size]
         data  = data[msg_size:]
         frame = pickle.loads(frame_data)
-        
-        #####################################################
-        out2=model(frame)
-        if len(out2.xyxy[0]) != 0:
-            bbox= out2.xyxy[0]
-            x1=int((bbox.data[0][0]).item())
-            y1=int((bbox.data[0][1]).item())
-            x2=int((bbox.data[0][2]).item())
-            y2=int((bbox.data[0][3]).item())
-            center_x=x1+(x2-x1)/2
-            center_y=y1+(y2-y1)/2
-            start_point = (x1, y1)
-            end_point = (x2, y2)
-            color = (255, 255, 0)
-            thickness = 2
-            frame = cv2.rectangle(frame, start_point, end_point, color, thickness)
-        #####################################################
-        
         #frame2, err = colorDetection(frame)
         #print(err)
         cv2.imshow("RECEIVING VIDEO", frame)
