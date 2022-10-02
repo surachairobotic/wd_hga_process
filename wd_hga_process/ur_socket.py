@@ -6,7 +6,7 @@ class UR_SOCKET():
         self.ur_port = _ur_port
         self.connected = False
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
+        
     def init(self):
         x = self.sock.connect((self.ur_ip, self.ur_port))
         print('connect : ', str(x))
@@ -34,7 +34,7 @@ class UR_SOCKET():
         msg = 'stopj(2)'
         self.send(msg)
     
-    def moveLine(self, p, v):
+    def moveLine(self, p, v=0.1):
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
         msg = 'movep(p[{}],a=0.1,v={},r=0)'.format(pose, v)
         #print(msg)
@@ -42,7 +42,7 @@ class UR_SOCKET():
 
     def moveJ(self, p):
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
-        msg = 'movej([{}],a=0.5,v=0.5,t=0,r=0)'.format(pose)
+        msg = 'movej([{}],a=0.1,v=0.35,t=0,r=0)'.format(pose)
         #print(msg)
         self.send(msg)
         

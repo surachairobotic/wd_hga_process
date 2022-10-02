@@ -14,8 +14,8 @@ class IMAGE():
     def __init__(self, node):
         self.node = node
 
-        self.sub_rgb = self.node.create_subscription(Image, '/camera/color/image_raw', self.cb_img, 10)
-        self.sub_depth = self.node.create_subscription(Image, '/camera/depth/image_rect_raw', self.cb_depth, 10)
+        self.sub_rgb = self.node.create_subscription(Image, '/camera/color/image_raw', self.cb_img, 1)
+        self.sub_depth = self.node.create_subscription(Image, '/camera/depth/image_rect_raw', self.cb_depth, 1)
         
         #self.timer = self.node.create_timer(1.0, self.timer_callback)
         self.i = 0

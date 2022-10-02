@@ -52,11 +52,13 @@ while True:
             state = con.receive(args.binary)
         if state is not None:
             j = state.actual_q
+            jj = state.actual_qd
             X,Y,Z,RX,RY,RZ = state.actual_TCP_pose
             date_and_time = state.timestamp
             i += 1
             print("TCP: pos ["+str(X)+", "+str(Y)+", "+str(Z)+"] m, rot ["+str(RX)+", "+str(RY)+", "+str(RZ)+"] rad")
             print(j)
+            print(jj)
             time.sleep(0.1)
 
     except KeyboardInterrupt:

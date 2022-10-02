@@ -36,6 +36,9 @@ class UR():
 
     def timer_callback(self):
         print('timer_callback')
+        trans = self.ur.get_pose()
+        print(trans.pos)
+        print(trans.orient)
 
 '''
     #print(trans)

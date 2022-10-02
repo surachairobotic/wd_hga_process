@@ -4,20 +4,21 @@ import rclpy
 import socket, cv2, pickle, struct, time
 import numpy as np
 import threading
-from cv_bridge import CvBridge
+from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 
 class IMAGE():
     def __init__(self, node):
         self.node = node
         self.threadImg = None
+        self.count = 0
 
         self.pub_img = self.node.create_publisher(Image, '/camera/color/image_raw', 10)
         
         # create socket
         self.client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        host_ip = '192.168.12.253' # paste your server ip address here
-        port = 2222
+        host_ip = '192.168.12.200' # paste your server ip address here
+        port = 1111
         self.client_socket.connect((host_ip,port)) # a tuple
         self.data = b""
         self.payload_size = struct.calcsize("Q")
@@ -52,6 +53,8 @@ class IMAGE():
             cv2.imshow("RECEIVING VIDEO", frame)
             image_message = self.bridge.cv2_to_imgmsg(frame, encoding="passthrough")
             try:
+                #self.count = (self.count+1)%4000000
+                #image_message.header.seq = self.count
                 self.pub_img.publish(image_message)
             except CvBridgeError as e:
                 print(e)
