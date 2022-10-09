@@ -39,9 +39,9 @@ def PickPlaceOnCar(ur, ur_rtde):
         time.sleep(0.1)
     '''
     while True:
-        if calError(ur_rtde.j, jj[0]) < 0.001:
+        if calError(ur_rtde.joint_pos, jj[0]) < 0.001:
             break
-        #print('running1')
+        print('running1')
         time.sleep(0.05)
     ur.stop()
     time.sleep(0.1)
@@ -49,9 +49,9 @@ def PickPlaceOnCar(ur, ur_rtde):
     ur.moveJ(jj[1])
     time.sleep(1.0)
     while True:
-        if calError(ur_rtde.j, jj[1]) < 0.001:
+        if calError(ur_rtde.joint_pos, jj[1]) < 0.001:
             break
-        #print('running2')
+        print('running2')
         time.sleep(0.05)
     ur.stop()
 
@@ -76,7 +76,7 @@ def PickPlaceOnCar(ur, ur_rtde):
     ur.moveJ(jj[0])
     time.sleep(1.0)
     while True:
-        if calError(ur_rtde.j, jj[0]) < 0.001:
+        if calError(ur_rtde.joint_pos, jj[0]) < 0.001:
             break
         time.sleep(0.05)
     ur.stop()
@@ -84,7 +84,7 @@ def PickPlaceOnCar(ur, ur_rtde):
     ur.moveJ(jj[1])
     time.sleep(1.0)
     while True:
-        if calError(ur_rtde.j, jj[1]) < 0.001:
+        if calError(ur_rtde.joint_pos, jj[1]) < 0.001:
             break
         time.sleep(0.05)
     ur.stop()
@@ -97,7 +97,7 @@ def PickPlaceOnCar(ur, ur_rtde):
     time.sleep(1.0)
     while True:
         #ur.moveJ(jj[0])
-        e = calError(ur_rtde.j, jj[0])
+        e = calError(ur_rtde.joint_pos, jj[0])
         if e < 0.001:
             break
         time.sleep(0.5)
@@ -111,14 +111,14 @@ def PickPlaceOnStation(ur, ur_rtde):
     jj = [  [2.853015184402466, -1.521887083803751, 1.3489940802203577, -1.3963006299785157, -1.5629175345050257, 2.868340492248535],
             [2.917309045791626, -1.149418131714203, 1.728659454976217, -2.1483165226378382, -1.5637615362750452, 2.8725500106811523],
             [2.917154550552368, -0.9958768051913758, 1.803354565297262, -2.3766147098936976, -1.5648234526263636, 2.8738040924072266],
-         ]
+         ] # radian
     pp = [  [0.5238256358393917, -0.016707621935164344, 0.32373465470222984,  2.2406576759783845, 2.202056688146876, 1.918706557866698e-05],
             [0.6156507074236995, -0.003378447663110685, 0.005003157466865166, -2.166706856318857, -2.2747083377912247, 0.0001657433156371269],
             [0.6157324570241369, -0.0033541572824511605, -0.09466795884229998, 2.166647904084402, 2.2748494254731235, -0.00013407364599941598]
-         ]
+         ] # [x,y,z,r,p,y]
     
-    pos = [ 'e0f8f53c-02bd-11ed-90f4-0001299a3e90', # G+
-            'd3ab6322-02bd-11ed-90f4-0001299a3e90',
+    pos = [ 'e0f8f53c-02bd-11ed-90f4-0001299a3e90', # grip open
+            'd3ab6322-02bd-11ed-90f4-0001299a3e90', # grip close
           ]
     # Get Request
     robot_ip='192.168.12.20'
@@ -138,7 +138,7 @@ def PickPlaceOnStation(ur, ur_rtde):
     ur.moveJ(jj[0])
     time.sleep(1.0)
     while True:
-        if calError(ur_rtde.j, jj[0]) < 0.001:
+        if calError(ur_rtde.joint_pos, jj[0]) < 0.001:
             break
         time.sleep(0.05)
     ur.stop()
@@ -148,7 +148,7 @@ def PickPlaceOnStation(ur, ur_rtde):
     ur.moveLine(pp[1], tip_speed)
     time.sleep(1.0)
     while True:
-        e = calError(ur_rtde.j, jj[1])
+        e = calError(ur_rtde.joint_pos, jj[1])
         if e < 0.001:
             break
         print(e)
@@ -166,8 +166,9 @@ def PickPlaceOnStation(ur, ur_rtde):
     ur.moveLine(new_pp, tip_speed)
     time.sleep(1.0)
     while True:
-        e = calError(ur_rtde.j, jj[2])
-        if e < 0.00175:
+        print('new_pp loop')
+        e = calError(ur_rtde.joint_pos, jj[2])
+        if e < 0.45: #0.00175
             break
         print(e)
         time.sleep(0.5)
@@ -183,7 +184,7 @@ def PickPlaceOnStation(ur, ur_rtde):
     ur.moveLine(pp[1], tip_speed)
     time.sleep(1.0)
     while True:
-        e = calError(ur_rtde.j, jj[1])
+        e = calError(ur_rtde.joint_pos, jj[1])
         if e < 0.001:
             break
         print(e)
@@ -208,7 +209,7 @@ def PickPlaceOnStation(ur, ur_rtde):
     ur.moveLine(new_pp, tip_speed)
     time.sleep(1.0)
     while True:
-        e = calError(ur_rtde.j, jj[2])
+        e = calError(ur_rtde.joint_pos, jj[2])
         if e < 0.00175:
             break
         print(e)
@@ -225,7 +226,7 @@ def PickPlaceOnStation(ur, ur_rtde):
     ur.moveLine(pp[1], tip_speed)
     time.sleep(1.0)
     while True:
-        e = calError(ur_rtde.j, jj[1])
+        e = calError(ur_rtde.joint_pos, jj[1])
         if e < 0.005:
             break
         print(e)
@@ -505,10 +506,10 @@ def colorDetection(img):
     return img, err+47
 
 if __name__ == '__main__':
-    ur = UR_SOCKET()
+    ur = UR_SOCKET() # for move control
     ur.init()
 
-    ur_rtde = UR_INFORMATION()
+    ur_rtde = UR_INFORMATION() # get current robot state
 
     print('PickPlaceOnStation')
     PickPlaceOnStation(ur, ur_rtde)

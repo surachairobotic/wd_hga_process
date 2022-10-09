@@ -6,6 +6,13 @@ sys.path.append('..')
 import rtde.rtde as rtde
 import rtde.rtde_config as rtde_config
 import time, keyboard
+#from universal_robot_kinematics import *
+from ur5_kinematics import *
+#from rtde_control import RTDEControlInterface as RTDEControl
+
+#rtde_c = RTDEControl("192.168.12.100")
+
+kin = Kinematic()
 
 # parameters
 parser = argparse.ArgumentParser()
@@ -56,9 +63,12 @@ while True:
             X,Y,Z,RX,RY,RZ = state.actual_TCP_pose
             date_and_time = state.timestamp
             i += 1
+            print("Joint : {}".format(j))
             print("TCP: pos ["+str(X)+", "+str(Y)+", "+str(Z)+"] m, rot ["+str(RX)+", "+str(RY)+", "+str(RZ)+"] rad")
-            print(j)
-            print(jj)
+            #joint = rtde_c.getInverseKinematics([X,Y,Z], [RX,RY,RZ], 1.0, 1.0)
+            joint = kin.invKine(state.actual_TCP_pose, j)
+            print(joint)
+            #print(jj)
             time.sleep(0.1)
 
     except KeyboardInterrupt:

@@ -6,10 +6,15 @@ import rtde.rtde as rtde
 import rtde.rtde_config as rtde_config
 import time, threading
 
+from rtde_control import RTDEControlInterface as RTDEControl
+
+
 class UR_INFORMATION():
     def __init__(self):
-        self.j = []
-        self.v = []
+        self.joint_pos = []
+        self.joint_velo = []
+        self.tip_pos = []
+        self.tip_velo = []
     
         # parameters
         parser = argparse.ArgumentParser()
@@ -37,16 +42,18 @@ class UR_INFORMATION():
         self.con.send_output_setup(output_names, output_types, frequency=self.args.frequency)
         self.con.send_start()
         
+        self.threadExit = False
         self.thread = threading.Thread(target=self.threadGetInfo)
         self.thread.start()
 
     def __del__(self):
+        self.threadExit = True
         self.thread.join()
         self.con.send_pause()
         self.con.disconnect()
     
     def threadGetInfo(self):
-        while True:
+        while not self.threadExit:
             if self.args.samples > 0 and i >= self.args.samples:
                 keep_running = False
             try:
@@ -55,10 +62,12 @@ class UR_INFORMATION():
                 else:
                     state = self.con.receive(self.args.binary)
                 if state is not None:
-                    self.j = state.actual_q
-                    self.v = state.actual_qd
-                    X,Y,Z,RX,RY,RZ = state.actual_TCP_pose
-                    date_and_time = state.timestamp
+                    self.joint_pos = state.actual_q
+                    self.joint_velo = state.actual_qd
+                    self.tip_pos = state.actual_TCP_pose
+                    self.tip_velo = state.actual_TCP_speed
+                    #X,Y,Z,RX,RY,RZ = state.actual_TCP_pose
+                    #date_and_time = state.timestamp
                     #print("TCP: pos ["+str(X)+", "+str(Y)+", "+str(Z)+"] m, rot ["+str(RX)+", "+str(RY)+", "+str(RZ)+"] rad")
                     #print(j)
                     #print(self.v)
