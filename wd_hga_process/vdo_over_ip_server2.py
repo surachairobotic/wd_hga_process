@@ -78,6 +78,7 @@ def main():
 
   bExit = False
   while not bExit:
+    print('server_socket.accept()')
     client_socket, addr = server_socket.accept()
     print('GOT CONNECTION FROM: ', addr)
     #if (cv2.waitKey(1) & 0xFF) == ord('w'):

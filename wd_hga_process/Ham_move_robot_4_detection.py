@@ -1,7 +1,13 @@
-import time, keyboard, math, requests, copy
+import time, keyboard, math, requests, copy, threading
 import socket, cv2, pickle, struct
 import numpy as np
 from ur_socket import *
+
+import matplotlib.pyplot as plt
+from PIL import Image, ImageFont, ImageDraw
+import torch
+import pandas as pd
+
 
 SOCKET_HOST = "127.0.0.1"
 SOCKET_PORT = 63352
@@ -10,15 +16,108 @@ tip_speed = 0.1
 
 enable_grip = False
 
+model=torch.hub.load('/home/cmit/yolov5/', 'custom', path='/home/cmit/yolov5/best_top_TINY.pt', source='local')
+
+frame_detect = None
+iThreadRun = 0
+
+def threadDetection():
+    global frame_detect, iThreadRun
+    
+    print('threadDetection')
+    frame_detect = cv2.resize(frame_detect,(848,480))
+    out2=model(frame_detect)
+    if len(out2.xyxy[0]) != 0:
+        bbox= out2.xyxy[0]
+        x1=int((bbox.data[0][0]).item())
+        y1=int((bbox.data[0][1]).item())
+        x2=int((bbox.data[0][2]).item())
+        y2=int((bbox.data[0][3]).item())
+        center_x=x1+(x2-x1)/2
+        center_y=y1+(y2-y1)/2
+        start_point = (x1, y1)
+        end_point = (x2, y2)
+        color = (255, 255, 0)
+        thickness = 1
+        ideal_start_point =(283,207) #,888 ##########x1 y1 x2 y2 :283 207 639 436
+        ideal_end_point =(639,436)############
+        color_ideal=(0,0,255)
+        frame = cv2.rectangle(frame_detect, ideal_start_point,  ideal_end_point, color_ideal, 1)
+        frame = cv2.rectangle(frame_detect, start_point, end_point, color, thickness)
+        print("x1 y1 x2 y2 :{} {} {} {}".format(x1,y1,x2,y2))
+    ###########################
+        area_detect=(x2-x1)*(y2-y1)
+        area_ideal=(ideal_end_point[0]-ideal_start_point[0])*(ideal_end_point[1]-ideal_start_point[1])
+        if (abs(area_ideal-area_detect)/area_ideal)*100 >10 :
+            if area_detect>area_ideal:
+                print("too close")
+            if area_detect<area_ideal:
+                print("too far")
+        if (abs(area_ideal-area_detect)/area_ideal)*100 <10 :
+            print("z Axis :OK")
+     ####################################### Z axis 
+        if abs(x2-ideal_end_point[0])>10:
+            if x2>ideal_end_point[0]:
+                print('move right')
+                #ur.moveY(-0.01, tip_speed)
+                #time.sleep(30)
+            if x2<ideal_end_point[0]:
+                print('move left')
+                #ur.moveY(0.01, tip_speed)
+                #time.sleep(30)
+                '''
+            if abs(x1-ideal_start_point[0])>10:
+                print('move left')
+                ur.moveY(0.01, tip_speed, debug=True)
+                time.sleep(3)
+                '''
+        if abs(y1-ideal_start_point[1])>10:
+            if y1>ideal_start_point[1]:
+                print('move up')
+                #ur.moveX(0.01, tip_speed)
+                #time.sleep(30)
+            if y1<ideal_start_point[1]:
+                print('move down')
+                #ur.moveX(-0.01, tip_speed)
+                #time.sleep(30)
+                '''
+            if abs(y2-ideal_end_point[1])>10:
+                print('move down')
+                ur.moveX(-0.01, tip_speed, debug=True)
+                time.sleep(3)
+                '''
+      ####################################### X-Y AXIS
+    else:
+        print("Can't Detect")
+    #####################################################################
+    print('threadDetection - iThreadRun : {}'.format(iThreadRun))
+    iThreadRun = 2
+    print('threadDetection - iThreadRun : {}'.format(iThreadRun))
+
 def ham_detect_and_adjust(ur):
+    global frame_detect, iThreadRun
+
+    cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
+
+    cnt=0
+    print('ham_detect_and_adjust')
     # create socket
-    client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    host_ip = '192.168.12.200' # paste your server ip address here
-    port = 1112
+    client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)    
+    print(cnt)
+    cnt+=1
+    host_ip = '192.168.137.123' # paste your server ip address here
+    port = 1234
+    print(cnt)
+    cnt+=1
     client_socket.connect((host_ip,port)) # a tuple
+    print(cnt)
+    cnt+=1
     data = b""
+    print(cnt)
+    cnt+=1
     payload_size = struct.calcsize("Q")
 
+    print('while loop')
     while True:
         t = time.time()
 
@@ -37,11 +136,25 @@ def ham_detect_and_adjust(ur):
         frame = pickle.loads(frame_data)
         #frame2, err = colorDetection(frame)
         #print(err)
-                
+        #####################################################################
+        print('iThreadRun : {}'.format(iThreadRun))
+        if iThreadRun == 0:
+            print('in iThreadRun')
+            iThreadRun = 1
+            frame_detect = copy.deepcopy(frame)
+            threadStatus = threading.Thread(target=threadDetection)
+            threadStatus.start()
+        elif iThreadRun == 2:
+            print("finish1")
+            cv2.imshow("Detection", frame_detect)
+            print("finish2")
+            iThreadRun = 0            
+            
         #frame = cv2.imread('/home/cmit/dev_ws/ham_image/rgb_0.png')
         cv2.imshow("RECEIVING VIDEO", frame)
         #print('FPS : ' + str(1.0/(time.time()-t)))
         key = cv2.waitKey(1) & 0xFF
+        '''
         if key == ord('q'):
             break
         elif key == ord('w'):
@@ -62,6 +175,8 @@ def ham_detect_and_adjust(ur):
         elif key == ord('-'):
             print('-')
             ur.moveZ(-0.01, tip_speed, debug=True)
+        '''
+
     cv2.destroyAllWindows()
     client_socket.close()
 
@@ -83,7 +198,7 @@ def Pick_From_Station(ur): #1-4 waypoint
     if enable_grip:
         ur.grip_open()
 
-    #ham_detect_and_adjust(ur)
+    ham_detect_and_adjust(ur)
 
     print('step 2 ur.moveLine(pp[0]) waypoint 1')
     ur.moveLine(pp[0], tip_speed)
@@ -163,13 +278,15 @@ def PickPlaceOnCar(ur):
     ur.moveLine(pp[5], tip_speed)
   
 if __name__ == '__main__':
-    ur = UR_SOCKET() # for move control
-    ur.init()
+    #ur = UR_SOCKET() # for move control
+    #ur.init()
 
     #ur_rtde = UR_INFORMATION() # get current robot state
 
+    ham_detect_and_adjust(10)
+
     print('Pick_From_Station')
-    Pick_From_Station(ur)
+    #Pick_From_Station(ur)
     print('PickPlaceOnCar')
     #PickPlaceOnCar(ur)
     print('end')

@@ -68,7 +68,7 @@ def main():
     print("model load DONE")
     ###########################################
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    host_ip = '192.168.12.253' # paste your server ip address here
+    host_ip = '192.168.137.49' # paste your server ip address here
     print('Enter port : ')
     port = int(input())
     client_socket.connect((host_ip, port)) # a tuple
