@@ -3,7 +3,7 @@ import pyrealsense2 as rs
 import numpy as np
 import cv2
 
-devide = 2
+devide = 1
 
 def returnCameraIndexes():
   # checks the first 10 indexes.
@@ -27,8 +27,8 @@ def main():
   print(indx[-1])
 
   vid = cv2.VideoCapture(indx[-1])
-  vid.set(cv2.CAP_PROP_BUFFERSIZE, 10)
-  vid.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+  #vid.set(cv2.CAP_PROP_BUFFERSIZE, 10)
+  vid.set(cv2.CAP_PROP_FRAME_WIDTH, 848)
   vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
   f = vid.get(cv2.CAP_PROP_FPS)
   print('FPS : ', f)
@@ -85,6 +85,8 @@ def main():
     #    break
     if client_socket:
       vid = cv2.VideoCapture(indx[-1])
+      vid.set(cv2.CAP_PROP_FRAME_WIDTH, 848)
+      vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
       width = int(vid.get(3)/devide)
       height = int(vid.get(4)/devide)
             
@@ -97,7 +99,10 @@ def main():
           
           a = pickle.dumps(frame)
           message = struct.pack("Q", len(a)) + a
-          client_socket.sendall(message)
+          try:
+            client_socket.sendall(message)
+          except:
+            break
           
           cv2.imshow('Server VDO', frame)
           key = cv2.waitKey(1) & 0xFF
