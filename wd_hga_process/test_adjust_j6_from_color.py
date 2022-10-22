@@ -4,13 +4,24 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from PIL import Image, ImageFont, ImageDraw
+from ur_socket import *
 
 frame_detect = None
 iThreadRun = 0
+robot = UR_SOCKET() # for move control
 
-h=[14, 20]
-s=[70, 255]
-v=[80, 255]
+class Pink():
+    def __init__(self):
+        self.h=[165, 175]
+        self.s=[0, 255]
+        self.v=[0, 255]
+
+class Orange():
+    def __init__(self):
+        self.h=[14, 20]
+        self.s=[200, 255]
+        self.v=[200, 255]
+
 
 def threadColorDetection():
     global frame_detect, iThreadRun
@@ -26,29 +37,60 @@ def threadColorDetection():
     #print('threadDetection - iThreadRun : {}'.format(iThreadRun))
 
 def colorDetection():
-    global frame_detect, iThreadRun, h, s, v
+    global frame_detect, iThreadRun, h, s, v, robot
     height, width, channels = frame_detect.shape
 
     # convert to hsv colorspace
     hsv = cv2.cvtColor(frame_detect, cv2.COLOR_BGR2HSV)
     hsv = cv2.blur(hsv, (10,10)) 
 
-    # lower bound and upper bound for Green color
-    #lower_bound = np.array([50,50,50])
-    #upper_bound = np.array([150,255,255])
-
-    # lower bound and upper bound for Red color
-    lower_bound = np.array([h[0],s[0],v[0]])
-    upper_bound = np.array([h[1],s[1],v[1]])
+    # lower bound and upper bound for Pink color
+    pink = Pink()
+    lower_bound = np.array([pink.h[0],pink.s[0],pink.v[0]])
+    upper_bound = np.array([pink.h[1],pink.s[1],pink.v[1]])
 
     # find the colors within the boundaries
-    mask = cv2.inRange(hsv, lower_bound, upper_bound)
-    mask = cv2.erode(mask, np.ones((5, 5), dtype=np.uint8))
-    mask = cv2.dilate(mask, np.ones((5, 5), dtype=np.uint8))
+    maskPink = cv2.inRange(hsv, lower_bound, upper_bound)
+    maskPink = cv2.erode(maskPink, np.ones((5, 5), dtype=np.uint8))
+    maskPink = cv2.dilate(maskPink, np.ones((5, 5), dtype=np.uint8))
+
+    # lower bound and upper bound for Orange color
+    orange = Orange()
+    lower_bound = np.array([orange.h[0],orange.s[0],orange.v[0]])
+    upper_bound = np.array([orange.h[1],orange.s[1],orange.v[1]])
+
+    maskOrange = cv2.inRange(hsv, lower_bound, upper_bound)
+    maskOrange = cv2.erode(maskOrange, np.ones((5, 5), dtype=np.uint8))
+    maskOrange = cv2.dilate(maskOrange, np.ones((5, 5), dtype=np.uint8))
     
     # Now you can finally find contours.
-    contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(maskPink.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    pink_contour = getLargestContour(contours)
 
+    contours, hierarchy = cv2.findContours(maskOrange.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    orange_contour = getLargestContour(contours)
+
+    if pink_contour is None and orange_contour is None:
+        iThreadRun = 2
+        return -1
+
+    frame_detect, center_pink = draw(frame_detect, pink_contour, (0,255,0))
+    frame_detect, center_orange = draw(frame_detect, orange_contour, (0,0,255))
+    
+    #print("{} : {} : {}".format(center_orange, center_pink, math.atan2(center_orange[1]-center_pink[1], center_orange[0]-center_pink[0])))
+    imageTheta = math.atan2(center_orange[1]-center_pink[1], center_orange[0]-center_pink[0])
+    j6 = robot.ur_rtde.joint_pos[5]
+    print("{} : {}".format(imageTheta, j6))
+    '''
+    if imageTheta-3.1 > 0.1:
+        js = copy.deepcopy(robot.ur_rtde.joint_pos)
+        js[5] += 0.05
+        robot.moveJ(js)
+    '''
+
+    return 1
+
+def getLargestContour(contours):
     final_contours = None
     final_area = 0
     for contour in contours:
@@ -59,46 +101,38 @@ def colorDetection():
     try:
         x, y, _w, _h = cv2.boundingRect(final_contours)
     except:
-        iThreadRun = 2
-        return -1
+        return None
+    return final_contours
+
+
+def draw(frame, contour, color):
     #print(x, " ", y, " ", w, " ", h)
+    x, y, _w, _h = cv2.boundingRect(contour)
     cx = int(_w/2.0+x)
     cy = int(_h/2.0+y)
 
     # Center coordinates
     center_coordinates = (cx, cy)
-     
-    # Radius of circle
-    radius = 2
-      
-    # Blue color in BGR
-    color = (0, 255, 255)
-      
-    # Line thickness of 2 px
-    thickness = 2
-
+            
     # Using cv2.circle() method
     # Draw a circle with blue line borders of thickness of 2 px
-    frame_detect = cv2.circle(frame_detect, center_coordinates, radius, color, thickness)
+    frame = cv2.circle(frame, center_coordinates, radius=2, color=color, thickness=2)
 
     #for i in range(len(contours)):
     #    cv2.drawContours(image=frame_detect, contours=contours, contourIdx=i, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
     #cv2.drawContours(img, final_contours, i, np.array([50, 250, 50]), 4)
-    cv2.drawContours(image=frame_detect, contours=final_contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-    print([_w, _h])
+    cv2.drawContours(image=frame, contours=contour, contourIdx=-1, color=color, thickness=2, lineType=cv2.LINE_AA)
+    #print([_w, _h])
     #pt1 = (int(x),int(y))
     #pt2 = (int(x+_w),int(y+_h))
     #f1 = copy.deepcopy(frame_detect)
     #cv2.rectangle(img=frame_detect, start_point=pt1, end_point=pt2, color=(255, 255, 0), thickness=2)
 
     #res = cv2.bitwise_and(img, img, mask=mask)
-    err = int(width/2.0) - cx
+    return frame, (cx,cy)
 
-    return err
-
-
-def detect_and_adjust():
-    global frame_detect, iThreadRun, h, s, v
+def detect_and_adjust(host_ip = '192.168.12.200', port = 1234):
+    global frame_detect, iThreadRun, h, s, v, robot
 
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
 
@@ -106,8 +140,6 @@ def detect_and_adjust():
     #print('detect_and_adjust')
     # create socket
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)    
-    host_ip = '192.168.137.49' # paste your server ip address here
-    port = 1111
     client_socket.connect((host_ip,port)) # a tuple
     data = b""
     payload_size = struct.calcsize("Q")
@@ -188,6 +220,8 @@ def detect_and_adjust():
     client_socket.close()
   
 if __name__ == '__main__':
+    robot.init()
+
     detect_and_adjust()
 
     print('end')   

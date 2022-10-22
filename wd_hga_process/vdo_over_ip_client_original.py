@@ -67,8 +67,9 @@ def main():
     # create socket
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     host_ip = '192.168.137.49' # paste your server ip address here
-    print('Enter port : ')
-    port = int(input())
+    port = 1234
+    #print('Enter port : ')
+    #port = int(input())
     client_socket.connect((host_ip,port)) # a tuple
     data = b""
     payload_size = struct.calcsize("Q")
