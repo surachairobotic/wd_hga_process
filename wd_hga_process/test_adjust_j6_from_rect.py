@@ -7,6 +7,8 @@ from PIL import Image, ImageFont, ImageDraw
 from ur_socket import *
 
 frame_detect = None
+hsv = None
+gray = None
 iThreadRun = 0
 robot = UR_SOCKET() # for move control
 
@@ -22,6 +24,7 @@ class Orange():
         self.s=[200, 255]
         self.v=[160, 255]
 
+
 def threadColorDetection():
     global frame_detect, iThreadRun
     
@@ -36,12 +39,15 @@ def threadColorDetection():
     #print('threadDetection - iThreadRun : {}'.format(iThreadRun))
 
 def colorDetection():
-    global frame_detect, iThreadRun, h, s, v, robot
+    global frame_detect, iThreadRun, h, s, v, robot, hsv, gray
     height, width, channels = frame_detect.shape
 
     # convert to hsv colorspace
     hsv = cv2.cvtColor(frame_detect, cv2.COLOR_BGR2HSV)
-    hsv = cv2.blur(hsv, (5,5)) 
+    hsv = cv2.blur(hsv, (5,5))
+    
+    gray = cv2.cvtColor(frame_detect, cv2.COLOR_BGR2GRAY)
+    #gray = cv2.blur(gray, (10,10))
 
     # lower bound and upper bound for Pink color
     pink = Pink()
@@ -78,8 +84,8 @@ def colorDetection():
     
     #print("{} : {} : {}".format(center_orange, center_pink, math.atan2(center_orange[1]-center_pink[1], center_orange[0]-center_pink[0])))
     imageTheta = math.atan2(center_orange[1]-center_pink[1], center_orange[0]-center_pink[0])
-    #j6 = robot.ur_rtde.joint_pos[5]
-    print("theta={}, dist={}, orange[{}], pink[{}]".format(imageTheta, dist(center_orange, center_pink), center_orange, center_pink))
+    j6 = robot.ur_rtde.joint_pos[5]
+    print("{} : {}".format(imageTheta, j6))
     '''
     if imageTheta-3.1 > 0.1:
         js = copy.deepcopy(robot.ur_rtde.joint_pos)
@@ -87,11 +93,7 @@ def colorDetection():
         robot.moveJ(js)
     '''
 
-    # theta=3.0947258255584007, dist=597.6562557189542, orange[(196, 171)], pink[(793, 143)]
     return 1
-
-def dist(p1, p2):
-    return math.sqrt(math.pow(p1[0]-p2[0], 2) + math.pow(p1[1]-p2[1], 2))
 
 def getLargestContour(contours):
     final_contours = None
@@ -138,6 +140,8 @@ def detect_and_adjust(host_ip = '192.168.137.49', port = 1234):
     global frame_detect, iThreadRun, h, s, v, robot
 
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
+    cv2.namedWindow("HSV", cv2.WINDOW_AUTOSIZE);
+    #cv2.namedWindow("Gray", cv2.WINDOW_AUTOSIZE);
 
     cnt=0
     #print('detect_and_adjust')
@@ -179,6 +183,8 @@ def detect_and_adjust(host_ip = '192.168.137.49', port = 1234):
         elif iThreadRun == 2:
             #print("finish1")
             cv2.imshow("Detection", frame_detect)
+            cv2.imshow("HSV", hsv)
+            #cv2.imshow("Gray", gray)
             #print("finish2")
             iThreadRun = 0            
         
@@ -186,64 +192,38 @@ def detect_and_adjust(host_ip = '192.168.137.49', port = 1234):
         #cv2.imwrite('ham_scale.png',frame)
         #cv2.imshow("RECEIVING VIDEO", frame)
         #print('FPS : ' + str(1.0/(time.time()-t)))
-        offset = 0.01
         key = cv2.waitKey(10) & 0xFF
-        if key == ord('s'):
-            print('stop')
-            robot.stop()
-        elif key == ord('q'):
+        if key == ord('q'):
             break
-        elif key == ord('+'):
-            js = copy.deepcopy(robot.ur_rtde.joint_pos)
-            print(js)
-            js[5] += offset
-            print(js)
-            robot.moveJ(js, v=0.1, block=False)
-        elif key == ord('-'):
-            js = copy.deepcopy(robot.ur_rtde.joint_pos)
-            print(js)
-            js[5] -= offset
-            print(js)
-            robot.moveJ(js, v=0.1, block=False)
+        elif key == ord('a'):
+            h[0] = min(h[0]+1, 255)
+        elif key == ord('z'):
+            h[0] = max(h[0]-1, 0)
 
-        elif key == ord('4'):
-            pos = copy.deepcopy(robot.ur_rtde.tip_pos)
-            print(pos)
-            pos[0] += offset
-            print(pos)
-            robot.moveLine(pos, v=0.1, block=False)
-        elif key == ord('1'):
-            pos = copy.deepcopy(robot.ur_rtde.tip_pos)
-            print(pos)
-            pos[0] -= offset
-            print(pos)
-            robot.moveLine(pos, v=0.1, block=False)
+        elif key == ord('s'):
+            h[1] = min(h[1]+1, 255)
+        elif key == ord('x'):
+            h[1] = max(h[1]-1, 0)
 
-        elif key == ord('5'):
-            pos = copy.deepcopy(robot.ur_rtde.tip_pos)
-            print(pos)
-            pos[1] += offset
-            print(pos)
-            robot.moveLine(pos, v=0.1, block=False)
-        elif key == ord('2'):
-            pos = copy.deepcopy(robot.ur_rtde.tip_pos)
-            print(pos)
-            pos[1] -= offset
-            print(pos)
-            robot.moveLine(pos, v=0.1, block=False)
+        elif key == ord('d'):
+            s[0] = min(s[0]+1, 255)
+        elif key == ord('c'):
+            s[0] = max(s[0]-1, 0)
 
-        elif key == ord('6'):
-            pos = copy.deepcopy(robot.ur_rtde.tip_pos)
-            print(pos)
-            pos[2] += offset
-            print(pos)
-            robot.moveLine(pos, v=0.1, block=False)
-        elif key == ord('3'):
-            pos = copy.deepcopy(robot.ur_rtde.tip_pos)
-            print(pos)
-            pos[2] -= offset
-            print(pos)
-            robot.moveLine(pos, v=0.1, block=False)
+        elif key == ord('f'):
+            s[1] = min(s[1]+1, 255)
+        elif key == ord('v'):
+            s[1] = max(s[1]-1, 0)
+            
+        elif key == ord('g'):
+            v[0] = min(v[0]+1, 255)
+        elif key == ord('b'):
+            v[0] = max(v[0]-1, 0)
+
+        elif key == ord('h'):
+            v[1] = min(v[1]+1, 255)
+        elif key == ord('n'):
+            v[1] = max(v[1]-1, 0)
 
     cv2.destroyAllWindows()
     client_socket.close()

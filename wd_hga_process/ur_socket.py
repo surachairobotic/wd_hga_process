@@ -65,20 +65,23 @@ class UR_SOCKET():
         msg = 'stopj(2)'
         self.send(msg)
     
-    def moveLine(self, p, v=0.1, debug=False, err=0.0005):
+    def moveLine(self, p, v=0.1, debug=False, err=0.0005, block=True):
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
         msg = 'movep(p[{}],a=0.1,v={},r=0)'.format(pose, v)
-        #print(msg)
+        print(msg)
         self.send(msg)
-        print('moveLine : debug={}'.format(debug))
-        self.blockL(p, err=err, debug=debug)
+        if debug:
+            print('moveLine : debug={}'.format(debug))
+        if block:
+            self.blockL(p, err=err, debug=debug)
 
-    def moveJ(self, j, debug=False):
+    def moveJ(self, j, v=0.1, debug=False, block=True):
         pose = "{},{},{},{},{},{}".format(j[0], j[1], j[2], j[3], j[4], j[5])
-        msg = 'movej([{}],a=0.1,v=0.35,t=0,r=0)'.format(pose)
-        #print(msg)
+        msg = 'movej([{}],a=0.1,v={},t=0,r=0)'.format(pose, v)
+        print(msg)
         self.send(msg)
-        self.blockJ(j, debug=debug)
+        if block:
+            self.blockJ(j, debug=debug)
 
     def getFK(self, j):
         pose = "{},{},{},{},{},{}".format(j[0], j[1], j[2], j[3], j[4], j[5])
