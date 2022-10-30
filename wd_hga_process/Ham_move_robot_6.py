@@ -25,14 +25,15 @@ y_axix_offset=0.001212
 robot = UR_SOCKET()
 pos=[]
 tip=[]
+Tool=[0,0,0,0,0,0]
 tResetDetector = time.time()
 
 def threadDetection():
-    global frame_detect, iThreadRun, tResetDetector,pos,tip
+    global frame_detect, iThreadRun, tResetDetector,pos,tip,Tool
     pos = copy.deepcopy(robot.ur_rtde.joint_pos)
     tip = copy.deepcopy(robot.ur_rtde.tip_pos)
     print('threadDetection')
-    frame_detect = cv2.resize(frame_detect,(840,488))
+    frame_detect = cv2.resize(frame_detect,(848,480))
     out2=model(frame_detect)
     if len(out2.xyxy[0]) != 0:
         bbox= out2.xyxy[0]
@@ -46,13 +47,16 @@ def threadDetection():
         end_point = (x2, y2)
         color = (255, 255, 0)
         thickness = 1
-        ideal_start_point =(350,155) ##########x1 y1 x2 y2 :364 134 631 367
-        ideal_end_point =(612,384)############ test 323 60 775 461
+        ideal_start_point =(301,124) ##########x1 y1 x2 y2 :301 124 565 350
+
+        ideal_end_point =(565,350)############ 
 
         color_ideal=(0,0,255)
         frame = cv2.rectangle(frame_detect, ideal_start_point,  ideal_end_point, color_ideal, 1)
         frame = cv2.rectangle(frame_detect, start_point, end_point, color, thickness)
         print("x1 y1 x2 y2 :{} {} {} {}".format(x1,y1,x2,y2))
+        print("center_x: {}".format(center_x))
+        print("center_y: {}".format(center_y))
     ###########################
         area_detect=(x2-x1)*(y2-y1)
         area_ideal=(ideal_end_point[0]-ideal_start_point[0])*(ideal_end_point[1]-ideal_start_point[1])
@@ -64,52 +68,55 @@ def threadDetection():
         if (abs(area_ideal-area_detect)/area_ideal)*100 <10 :
             print("z Axis :OK")
      ####################################### Z axis 
-        if abs(x2-ideal_end_point[0])>10:
-            if x2>ideal_end_point[0]:
+        if abs(center_x-424)>10:
+            if center_x>424:
                 print('move right')
                 
                 
                 
-                new_pos=(x2-ideal_end_point[0])*x_axis_offset
-                print("new_pos {}".format(new_pos))
+                new_pos=(center_x-424)*x_axis_offset
+                #print("new_pos {}".format(new_pos))
                 tip = copy.deepcopy(robot.ur_rtde.tip_pos)
-                print("Before : {}".format(tip))
+                #print("Before : {}".format(tip))
                 tip[1] += new_pos
-                print("After : {}".format(tip))
-                
+                #print("After : {}".format(tip))
+                Tool[0]-=new_pos
                 #robot.moveLine(pos, v=0.1, block=False)
                 
-            if x2<ideal_end_point[0]:
+            if center_x<424:
                 print('move left')
                 
-                new_pos=(ideal_end_point[0]-x2)*x_axis_offset
-                print("new_pos {}".format(new_pos))
+                new_pos=(424-center_x)*x_axis_offset
+                #print("new_pos {}".format(new_pos))
                 tip = copy.deepcopy(robot.ur_rtde.tip_pos)
-                print("Before : {}".format(tip))
+                #print("Before : {}".format(tip))
                 tip[1] += new_pos
-                print("After : {}".format(tip))
+                Tool[0]+=new_pos
+                #print("After : {}".format(tip))
                 #robot.moveLine(pos, v=0.1, block=False)
-        if abs(y1-ideal_start_point[1])>10:
-            if y1>ideal_start_point[1]:
+        if abs(center_y-240)>10:
+            if center_y>240:
                 print('move up')
-                '''
-                new_pos=(y1-ideal_end_point[1]-y1)*y_axix_offset
-                pos = copy.deepcopy(robot.ur_rtde.joint_pos)
-                pos[1] += new_pos
+                
+                new_pos=(center_y-240)*y_axix_offset
+                #pos = copy.deepcopy(robot.ur_rtde.joint_pos)
+                #pos[1] += new_pos
+                Tool[1]-=new_pos
                 print(pos)
                 #ur.moveX(0.01, tip_speed)
                 #time.sleep(30)
-                '''
-            if y1<ideal_start_point[1]:
+               
+            if center_y<240:
                 print('move down')
-                '''
-                new_pos=(ideal_end_point[1]-y1)*y_axix_offset
-                pos = copy.deepcopy(robot.ur_rtde.joint_pos)
-                pos[1] -= new_pos
+                
+                new_pos=(240-center_y)*y_axix_offset
+                #pos = copy.deepcopy(robot.ur_rtde.joint_pos)
+                #pos[1] -= new_pos
+                Tool[1]+=new_pos
                 print(pos)
                 #ur.moveX(-0.01, tip_speed)
                 #time.sleep(30)
-                '''
+                
             '''
             if abs(y2-ideal_end_point[1])>10:
                 print('move down')
@@ -201,14 +208,16 @@ def colorDetection(img):
 
 
 def ham_detect_and_adjust(ur):
-    global frame_detect, iThreadRun, tResetDetector, pos, tip
+    global frame_detect, iThreadRun, tResetDetector, pos, tip ,Tool
 
     pp = [  [0.6157207196310158, -0.0034951583738285054, 0.3259457979936484,-2.1669420116783513, -2.2746159319997306, 0.0002964836215492035],
         [0.6157633906357547, -0.0033207232788505835, -0.09568281924359112, 2.1665312432692843, 2.2749129756716675, -9.94432715514844e-06],
         [0.61573910454117, -0.003344623563521177, 0.2524990991124455, 2.1666182382888155, 2.274809208082394, 3.522994048246124e-05],
         [-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]
      ] # [x,y,z,r,p,y]
-    robot.moveLine(pp[0], tip_speed)
+    robot.moveLine(pp[0], debug=False)
+    
+    #exit()
     
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
 
@@ -219,7 +228,7 @@ def ham_detect_and_adjust(ur):
     print(cnt)
     cnt+=1
     host_ip = '192.168.12.200' # paste your server ip address here
-    port = 1234
+    port = 5678
     print(cnt)
     cnt+=1
     client_socket.connect((host_ip,port)) # a tuple
@@ -267,7 +276,10 @@ def ham_detect_and_adjust(ur):
             print("finish1")
             print("actual pos : {}".format(robot.ur_rtde.tip_pos))
             print("Action move : {}".format(tip))
-            robot.moveLine(tip, v=0.01, block=True)
+            #robot.moveLine(tip, v=0.01, block=True)
+            robot.moveTool(Tool)
+            print("TOOL : {}".format(Tool))
+            Tool=[0,0,0,0,0,0]
             cv2.imshow("Detection", frame_detect)
             print("finish2")
             iThreadRun = 0            

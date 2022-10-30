@@ -13,12 +13,12 @@ class IMAGE():
         self.threadImg = None
         self.count = 0
 
-        self.pub_img = self.node.create_publisher(Image, '/camera/color/image_raw', 10)
+        self.pub_img = self.node.create_publisher(Image, '/camera/color/image_raw', 1)
         
         # create socket
         self.client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        host_ip = '192.168.12.200' # paste your server ip address here
-        port = 1111
+        host_ip = '192.168.137.85' # paste your server ip address here
+        port = 1234
         self.client_socket.connect((host_ip,port)) # a tuple
         self.data = b""
         self.payload_size = struct.calcsize("Q")
@@ -50,7 +50,7 @@ class IMAGE():
             frame_data = self.data[:msg_size]
             self.data  = self.data[msg_size:]
             frame = pickle.loads(frame_data)
-            cv2.imshow("RECEIVING VIDEO", frame)
+            #cv2.imshow("RECEIVING VIDEO", frame)
             image_message = self.bridge.cv2_to_imgmsg(frame, encoding="passthrough")
             try:
                 #self.count = (self.count+1)%4000000
