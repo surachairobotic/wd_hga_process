@@ -1,7 +1,7 @@
 import socket, cv2, pickle, struct, imutils, time
 import pyrealsense2 as rs
 import numpy as np
-import cv2
+import cv2, select
 
 devide = 1
 
@@ -75,44 +75,52 @@ def main():
   # Socket Listen
   server_socket.listen(5)
   print('LISTENING AT: ', socket_address)
+  
+  read_list = [server_socket]
 
   bExit = False
   while not bExit:
-    print('server_socket.accept()')
-    client_socket, addr = server_socket.accept()
-    print('GOT CONNECTION FROM: ', addr)
-    #if (cv2.waitKey(1) & 0xFF) == ord('w'):
-    #    break
-    if client_socket:
-      vid = cv2.VideoCapture(indx[-1])
-      vid.set(cv2.CAP_PROP_FRAME_WIDTH, 848)
-      vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-      width = int(vid.get(3)/devide)
-      height = int(vid.get(4)/devide)
-            
-      while( vid.isOpened() ):
-        print('Press q to exit and w for continue.')
-        ret, frame = vid.read()
-        if ret:
-          frame = cv2.resize(frame, (width, height))      
-          #frame = imutils.resize(frame, width=320)
-          
-          a = pickle.dumps(frame)
-          message = struct.pack("Q", len(a)) + a
-          try:
-            client_socket.sendall(message)
-          except:
-            break
-          
-          cv2.imshow('Server VDO', frame)
-          key = cv2.waitKey(1) & 0xFF
-          if key == ord('w'):
-            vid.release()
-            client_socket.close()
-          elif key == ord('q'):
-            vid.release()
-            client_socket.close()
-            bExit = True
+    readable, writable, errored = select.select(read_list, [], [])
+    print("len(readable) : {}".format(len(readable)))
+    for s in readable:
+      print("s : {}".format(type(s)))
+      if s is server_socket:
+          client_socket, address = server_socket.accept()
+          #read_list.append(client_socket)
+          print("Connection from {}".format(address))
+
+          vid = cv2.VideoCapture(indx[-1])
+          vid.set(cv2.CAP_PROP_FRAME_WIDTH, 848)
+          vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+          width = int(vid.get(3)/devide)
+          height = int(vid.get(4)/devide)
+              
+          while( vid.isOpened() ):
+            print('Press q to exit and w for continue.')
+            ret, frame = vid.read()
+            if ret:
+              frame = cv2.resize(frame, (width, height))      
+              #frame = imutils.resize(frame, width=320)
+                
+              a = pickle.dumps(frame)
+              message = struct.pack("Q", len(a)) + a
+              try:
+                client_socket.sendall(message)
+              except:
+                break
+                  
+              cv2.imshow('Server VDO', frame)
+              key = cv2.waitKey(1) & 0xFF
+              if key == ord('w'):
+                vid.release()
+                client_socket.close()
+                read_list.remove(s)
+              elif key == ord('q'):
+                vid.release()
+                client_socket.close()
+                read_list.remove(s)
+                bExit = True
+
 
 if __name__ == '__main__':
     main()
