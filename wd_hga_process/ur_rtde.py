@@ -15,6 +15,8 @@ class UR_INFORMATION():
         self.joint_velo = []
         self.tip_pos = []
         self.tip_velo = []
+        self.target_tool_pos = []
+        self.target_joint = []
     
         # parameters
         parser = argparse.ArgumentParser()
@@ -66,6 +68,8 @@ class UR_INFORMATION():
                     self.joint_velo = state.actual_qd
                     self.tip_pos = state.actual_TCP_pose
                     self.tip_velo = state.actual_TCP_speed
+                    self.target_tool_pos = state.target_TCP_pose
+                    self.target_joint = state.target_q
                     #X,Y,Z,RX,RY,RZ = state.actual_TCP_pose
                     #date_and_time = state.timestamp
                     #print("TCP: pos ["+str(X)+", "+str(Y)+", "+str(Z)+"] m, rot ["+str(RX)+", "+str(RY)+", "+str(RZ)+"] rad")

@@ -55,7 +55,7 @@ class UR_SOCKET():
         data = []
         while True:
             d = self.sock.recv(1024)
-            print(d.decode('ascii'))
+            print(d)
             if (len(d) < 1):
                 break
             data.append(d)
@@ -65,20 +65,37 @@ class UR_SOCKET():
         msg = 'stopj(2)'
         self.send(msg)
     
-    def moveLine(self, p, v=0.1, debug=False, err=0.0005):
+    def moveLine(self, p, v=0.1, debug=False, err=0.0005, block=True):
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
         msg = 'movep(p[{}],a=0.1,v={},r=0)'.format(pose, v)
-        #print(msg)
+        print(msg)
         self.send(msg)
-        print('moveLine : debug={}'.format(debug))
-        self.blockL(p, err=err, debug=debug)
+        if debug:
+            print('moveLine : debug={}'.format(debug))
+        if block:
+            self.blockL(p, err=err, debug=debug)
 
-    def moveJ(self, j, debug=False):
+    def moveJ(self, j, v=0.1, debug=False, block=True):
         pose = "{},{},{},{},{},{}".format(j[0], j[1], j[2], j[3], j[4], j[5])
-        msg = 'movej([{}],a=0.1,v=0.35,t=0,r=0)'.format(pose)
+        msg = 'movej([{}],a=0.1,v={},t=0,r=0)'.format(pose, v)
         #print(msg)
         self.send(msg)
-        self.blockJ(j, debug=debug)
+        if block:
+            self.blockJ(j, debug=debug)
+
+    def moveTool(self, p, v=0.01, block=True, exceptStop=False):
+        pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
+        msg = 'movel(pose_trans(get_actual_tcp_pose(),p[{}]),a=0.01, v={})'.format(pose, v)
+        #msg = 'speedl([{},{},{},0,0,0],a=0.1,t=1.0)'.format(x, y, z)
+        self.send(msg)
+        time.sleep(0.2)
+        if block:
+            self.blockP(debug=False, exceptStop=exceptStop)
+        '''
+        print('==============')
+        print(self.ur_rtde.target_tool_pos, " : ", self.ur_rtde.target_joint)
+        print('==============')
+        '''
 
     def getFK(self, j):
         pose = "{},{},{},{},{},{}".format(j[0], j[1], j[2], j[3], j[4], j[5])
@@ -99,6 +116,22 @@ class UR_SOCKET():
             e += math.sqrt(pow(actual[i]-target[i], 2))
         return e
 
+    def blockP(self, err=0.0001, debug=False, exceptStop=False):
+        if debug:
+            print('blockP : debug={}'.format(debug))
+        t = time.time()
+        while time.time()-t < 15:
+            pose = self.ur_rtde.tip_pos
+            target = self.ur_rtde.target_tool_pos
+            e = self.calError(pose, target)
+            if debug:
+                print("{}:{}:{}".format(pose, target, e))
+            if e < err:
+                break
+            time.sleep(0.05)
+        if not exceptStop:
+            self.stop()
+        time.sleep(0.1)
     def blockL(self, p, err=0.0005, debug=False):
         print('blockL : debug={}'.format(debug))
         t = time.time()
