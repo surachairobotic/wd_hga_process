@@ -225,7 +225,7 @@ def draw2(frame, contours, color, ref):
         cv2.drawContours(image=frame_detect, contours=contours, contourIdx=i, color=color, thickness=2, lineType=cv2.LINE_AA)
     return frame
 
-def detect_and_adjust(host_ip = '192.168.12.200', port = 5678): #192.168.12.200
+def detect_and_adjust(host_ip = '192.168.12.200', port = 1234): #192.168.12.200
     global frame_detect, iThreadRun, h, s, v, robot, bAutomate, oldTarget, debug_hsv, center_point, imageTheta, target_theta, target_cmd, dz
 
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);

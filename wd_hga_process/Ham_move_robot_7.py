@@ -22,14 +22,11 @@ frame_detect = None
 iThreadRun = 0
 x_axis_offset=0.001289
 y_axix_offset=0.001212
-robot = UR_SOCKET()
-pos=[]
-tip=[]
 Tool=[0,0,0,0,0,0]
 tResetDetector = time.time()
 
 def threadDetection():
-    global frame_detect, iThreadRun, tResetDetector,pos,tip,Tool
+    global frame_detect, iThreadRun, tResetDetector,Tool
     pos = copy.deepcopy(robot.ur_rtde.joint_pos)
     tip = copy.deepcopy(robot.ur_rtde.tip_pos)
     print('threadDetection')
@@ -70,64 +67,28 @@ def threadDetection():
      ####################################### Z axis 
         if abs(center_x-424)>10:
             if center_x>424:
-                print('move right')
-                
-                
-                
+                print('move right')                             
                 new_pos=(center_x-424)*x_axis_offset
-                #print("new_pos {}".format(new_pos))
-                tip = copy.deepcopy(robot.ur_rtde.tip_pos)
-                #print("Before : {}".format(tip))
-                tip[1] += new_pos
-                #print("After : {}".format(tip))
-                Tool[0]-=new_pos
-                #robot.moveLine(pos, v=0.1, block=False)
-                
+                Tool[0]-=new_pos    
             if center_x<424:
                 print('move left')
-                
                 new_pos=(424-center_x)*x_axis_offset
-                #print("new_pos {}".format(new_pos))
-                tip = copy.deepcopy(robot.ur_rtde.tip_pos)
-                #print("Before : {}".format(tip))
-                tip[1] += new_pos
                 Tool[0]+=new_pos
-                #print("After : {}".format(tip))
-                #robot.moveLine(pos, v=0.1, block=False)
         if abs(center_y-240)>10:
             if center_y>240:
                 print('move up')
-                
                 new_pos=(center_y-240)*y_axix_offset
-                #pos = copy.deepcopy(robot.ur_rtde.joint_pos)
-                #pos[1] += new_pos
                 Tool[1]-=new_pos
-                print(pos)
-                #ur.moveX(0.01, tip_speed)
-                #time.sleep(30)
-               
+                print(pos)              
             if center_y<240:
                 print('move down')
-                
                 new_pos=(240-center_y)*y_axix_offset
-                #pos = copy.deepcopy(robot.ur_rtde.joint_pos)
-                #pos[1] -= new_pos
                 Tool[1]+=new_pos
                 print(pos)
-                #ur.moveX(-0.01, tip_speed)
-                #time.sleep(30)
-                
-            '''
-            if abs(y2-ideal_end_point[1])>10:
-                print('move down')
-                ur.moveX(-0.01, tip_speed, debug=True)
-                time.sleep(3)
-            '''
       ####################################### X-Y AXIS
     else:
         print("Can't Detect")
     #####################################################################
-  
     print('threadDetection - iThreadRun : {}'.format(iThreadRun))
     iThreadRun = 2
     print('threadDetection - iThreadRun : {}'.format(iThreadRun))
@@ -135,7 +96,6 @@ def threadDetection():
 
 def threadColorDetection():
     global frame_detect, iThreadRun,pos
-    
     print('threadDetection')
     #frame_detect = cv2.resize(frame_detect,(848,480))
 
@@ -210,10 +170,10 @@ def colorDetection(img):
 def ham_detect_and_adjust(ur):
     global frame_detect, iThreadRun, tResetDetector, pos, tip ,Tool
 
-    pp = [  [0.6157207196310158, -0.0034951583738285054, 0.3259457979936484,-2.1669420116783513, -2.2746159319997306, 0.0002964836215492035],
-        [0.6157633906357547, -0.0033207232788505835, -0.09568281924359112, 2.1665312432692843, 2.2749129756716675, -9.94432715514844e-06],
-        [0.61573910454117, -0.003344623563521177, 0.2524990991124455, 2.1666182382888155, 2.274809208082394, 3.522994048246124e-05],
-        [-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]
+    pp = [  [0.6157207196310158, -0.0034951583738285054, 0.3259457979936484,-2.1669420116783513, -2.2746159319997306,0.0002964836215492035],
+            [0.6157633906357547, -0.0033207232788505835, -0.09568281924359112, 2.1665312432692843,2.2749129756716675,-9.94432715514844e-06],
+            [0.61573910454117, -0.003344623563521177, 0.2524990991124455, 2.1666182382888155, 2.274809208082394, 3.522994048246124e-05],
+            [-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]
      ] # [x,y,z,r,p,y]
     robot.moveLine(pp[0], debug=False)
     
@@ -284,35 +244,10 @@ def ham_detect_and_adjust(ur):
             print("finish2")
             iThreadRun = 0            
             
-        #frame = cv2.imread('/home/cmit/dev_ws/ham_image/rgb_0.png')
-        cv2.imwrite('ham_scale.png',frame)
+
+        
         cv2.imshow("RECEIVING VIDEO", frame)
         
-        #print('FPS : ' + str(1.0/(time.time()-t)))
-        key = cv2.waitKey(1) & 0xFF
-        '''
-        if key == ord('q'):
-            break
-        elif key == ord('w'):
-            print('w')
-            ur.moveX(0.01, tip_speed, debug=True)
-        elif key == ord('s'):
-            print('s')
-            ur.moveX(-0.01, tip_speed, debug=True)
-        elif key == ord('a'):
-            print('a')
-            ur.moveY(0.01, tip_speed, debug=True)
-        elif key == ord('d'):
-            print('d')
-            ur.moveY(-0.01, tip_speed, debug=True)
-        elif key == ord('+'):
-            print('+')
-            ur.moveZ(0.01, tip_speed, debug=True)
-        elif key == ord('-'):
-            print('-')
-            ur.moveZ(-0.01, tip_speed, debug=True)
-        '''
-
     cv2.destroyAllWindows()
     client_socket.close()
 
@@ -418,11 +353,9 @@ def PickPlaceOnCar(ur):
     ur.moveLine(pp[5], tip_speed)
   
 if __name__ == '__main__':
-    #ur = UR_SOCKET() # for move control
-    #ur.init()
-
+    robot = UR_SOCKET()
     robot.init()
-    #ur_rtde = UR_INFORMATION() # get current robot state
+
     ham_detect_and_adjust(10)
 
     print('Pick_From_Station')

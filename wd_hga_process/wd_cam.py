@@ -115,7 +115,7 @@ class IMAGE():
 
         #model = torch.hub.load('/home/cmit/yolov5/', 'custom', path='/home/cmit/yolov5/best_top.pt', source='local')
         #out2 = model(out)
-        #out2.show() 
+        #out2.show()
 
         #out2 = self.model(self.rgb_frame)
         #cv2.imshow("Yolo", out2)
