@@ -20,6 +20,83 @@ target_theta = 3.0947258255584007
 target_cmd = [0,0,0,0,0,0]
 dz = [0.0]
 
+hsv_debug = False
+
+class HSVDetection():
+    def __init__(self, color):
+        if color == 'pink':
+            self.h=[110, 180]
+            self.s=[20, 255]
+            self.v=[0, 255]
+            self.color = [123,82,179]
+        elif color == 'orange':
+            self.h=[17, 40]
+            self.s=[20, 255]
+            self.v=[20, 255]
+            self.color = [57,179,231]
+        elif color == 'red':
+            self.h=[0, 10]
+            self.s=[100, 255]
+            self.v=[100, 255]
+            self.color = [57,179,231]
+        self.lower_bound = np.array([self.h[0],self.s[0],self.v[0]])
+        self.upper_bound = np.array([self.h[1],self.s[1],self.v[1]])
+    def process(self, hsv):
+        mask = cv2.inRange(copy.deepcopy(hsv), self.lower_bound, self.upper_bound)
+        mask = cv2.erode(mask, np.ones((5, 5), dtype=np.uint8))
+        mask = cv2.dilate(mask, np.ones((3, 3), dtype=np.uint8))
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        #print(type(contours))
+        lContour = []
+        maxArea = 0
+        for i in range(len(contours)):
+            area = cv2.contourArea(contours[i])
+            x, y, _w, _h = cv2.boundingRect(contours[i])
+            s = min(_w,_h)/max(_w,_h)
+            p = float(area) / float(_w*_h)
+            if p > 0.55 and s > 0.5:
+                if len(lContour) < 2:
+                    lContour.append(contours[i])
+                elif area > cv2.contourArea(lContour[0]):
+                    lContour[0] = contours[i]
+                elif area > cv2.contourArea(lContour[1]):
+                    lContour[1] = contours[i]
+        try:
+            x0,y0,_,_ = cv2.boundingRect(lContour[0])
+            x1,y1,_,_ = cv2.boundingRect(lContour[1])
+            #print('{}, {} : before'.format((x0,y0), (x1,y1)))
+        except:
+            #print('except : x0,_,_,_ = cv2.boundingRect(lContour[0])')
+            return None, contours
+        if x1 < x0:
+            tmp = copy.deepcopy(lContour[0])
+            lContour[0] = copy.deepcopy(lContour[1])
+            lContour[1] = copy.deepcopy(tmp)
+
+        #x0,y0,_,_ = cv2.boundingRect(lContour[0])
+        #x1,y1,_,_ = cv2.boundingRect(lContour[1])
+        #print('{}, {}'.format((x0,y0), (x1,y1)))
+
+        return lContour, contours
+    def drawAll(self, _img, contours, debug=False):
+        if contours == None:
+            return False
+        _color = self.color
+        if debug:
+            _color = [0,0,0]
+        for i in range(len(contours)):
+            '''
+            area = cv2.contourArea(contours[i])
+            x, y, _w, _h = cv2.boundingRect(contours[i])
+            s = min(_w,_h)/max(_w,_h)
+            p = float(area) / float(_w*_h)
+            #print(s)
+            if p > 0.55 and s > 0.5:
+            '''
+                #cv2.drawContours(image=_img, contours=contours, contourIdx=i, color=_color, thickness=cv2.FILLED)
+            cv2.drawContours(image=_img, contours=contours, contourIdx=i, color=_color, thickness=2)
+
+
 class Pink():
     def __init__(self):
         self.h=[160, 175]
@@ -44,12 +121,71 @@ def threadColorDetection():
     #print('threadDetection')
     #frame_detect = cv2.resize(frame_detect,(848,480))
 
-    if colorDetection() == -1:
+    if colorDetection2() == -1:
         return -1
 
     #print('threadDetection - iThreadRun : {}'.format(iThreadRun))
     iThreadRun = 2
     #print('threadDetection - iThreadRun : {}'.format(iThreadRun))
+
+def colorDetection2():
+    global frame_detect, iThreadRun, h, s, v, robot, errTheta, debug_hsv, center_point, imageTheta, dz
+    height, width, channels = frame_detect.shape
+
+    points = np.array([[0, 190], [width, 190], [width, height], [0, height]])
+    cv2.fillPoly(frame_detect, pts=[points], color=(0, 0, 0))
+    '''
+    points = np.array([[width, 0], [width, height], [width-int(width/10), height], [width-int(width/10), 0]])
+    cv2.fillPoly(frame_detect, pts=[points], color=(0, 0, 0))
+    '''
+
+    # convert to hsv colorspace
+    hsv = cv2.cvtColor(frame_detect, cv2.COLOR_BGR2HSV)
+    hsv = cv2.blur(hsv, (5,5))
+    debug_hsv = copy.deepcopy(hsv)
+
+    #orange = HSVDetection('orange')
+    #contours = orange.process(hsv)
+    #orange.drawAll(frame_detect, contours, hsv_debug)
+
+    red = HSVDetection('red')
+    contours, all_contour = red.process(hsv)
+    #red.drawAll(frame_detect, contour, hsv_debug)
+    red.drawAll(frame_detect, all_contour, hsv_debug)
+    
+    if contours == None or len(contours) != 2:
+        iThreadRun = 2
+        return False
+        
+    try:
+        x, y, _w, _h = cv2.boundingRect(contours[0])
+    except:
+        iThreadRun = 2
+        return False
+    center_1 = find_center(contours[0])
+
+    try:
+        x, y, _w, _h = cv2.boundingRect(contours[1])
+    except:
+        iThreadRun = 2
+        return False
+    center_2 = find_center(contours[1])
+    
+    cx = min(center_1[0], center_2[0])
+    cx += ((max(center_1[0], center_2[0]) - cx) / 2)
+    cx = int(cx)
+    cy = min(center_1[1], center_2[1])
+    cy += ((max(center_1[1], center_2[1]) - cy) / 2)
+    cy = int(cy)
+    center_point = (cx, cy)
+    imageTheta = math.atan2(center_1[1]-center_2[1], center_1[0]-center_2[0])
+    dz = dist(center_1, center_2)
+    #print("center_point={}, imageTheta={}, dz={}".format(center_point, imageTheta, dz))
+    if imageTheta < 0.0:
+        imageTheta += (2*math.pi)
+
+    iThreadRun = 2
+    return True
 
 def colorDetection():
     global frame_detect, iThreadRun, h, s, v, robot, errTheta, debug_hsv, center_point, imageTheta, dz
@@ -109,14 +245,16 @@ def colorDetection():
     contours, hierarchy = cv2.findContours(maskOrange.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     orange_contour = getNearestContour(contours, center_pink)
 
+    if orange_contour is None:
+        iThreadRun = 2
+        return -1
+    frame_detect, center_orange = draw(frame_detect, orange_contour, (0,0,255))
+
     '''
     contours, hierarchy = cv2.findContours(maskGreen.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     green_contour = getLargestContour(contours)
     '''
 
-    if orange_contour is None:
-        iThreadRun = 2
-        return -1
 
     '''
     draw(debug_hsv, pink_contour, (0,255,0))
@@ -125,7 +263,6 @@ def colorDetection():
     '''
 
     #draw2(frame_detect, contours, (0,0,255), center_pink)
-    frame_detect, center_orange = draw(frame_detect, orange_contour, (0,0,255))
     #frame_detect, center_green = draw(frame_detect, green_contour, (255,0,255))
     
     cx = min(center_orange[0], center_pink[0])
@@ -140,6 +277,7 @@ def colorDetection():
     #print("center_point={}, imageTheta={}, dz={}".format(center_point, imageTheta, dz))
     if imageTheta < 0.0:
         imageTheta += (2*math.pi)
+
     '''
     j6 = robot.ur_rtde.joint_pos[5]
     target_theta = 3.0947258255584007
@@ -194,6 +332,14 @@ def getNearestContour(contours, refPoint):
         return None
     return final_contours
 
+def find_center(contour):
+    x, y, _w, _h = cv2.boundingRect(contour)
+    cx = int(_w/2.0+x)
+    cy = int(_h/2.0+y)
+
+    # Center coordinates
+    center_coordinates = (cx, cy)
+    return center_coordinates
 
 def draw(frame, contour, color):
     #print(x, " ", y, " ", w, " ", h)
@@ -225,7 +371,7 @@ def draw2(frame, contours, color, ref):
         cv2.drawContours(image=frame_detect, contours=contours, contourIdx=i, color=color, thickness=2, lineType=cv2.LINE_AA)
     return frame
 
-def detect_and_adjust(host_ip = '192.168.12.200', port = 1234): #192.168.12.200
+def detect_and_adjust(host_ip = '192.168.137.62', port = 1234): #192.168.12.200
     global frame_detect, iThreadRun, h, s, v, robot, bAutomate, oldTarget, debug_hsv, center_point, imageTheta, target_theta, target_cmd, dz
 
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);

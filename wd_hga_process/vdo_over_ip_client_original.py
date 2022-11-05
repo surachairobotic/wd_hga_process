@@ -66,19 +66,16 @@ def colorDetection(img):
 def main():
     # create socket
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-<<<<<<< HEAD
-    host_ip = '192.168.12.200' # paste your server ip address here
-    print('Enter port : ')
-    port = int(input())
-=======
-    host_ip = '192.168.137.49' # paste your server ip address here
+    host_ip = '192.168.137.62' # paste your server ip address here
     port = 1234
     #print('Enter port : ')
     #port = int(input())
->>>>>>> fd16ae851161184d4a318370efdf0d88822957e0
+
     client_socket.connect((host_ip,port)) # a tuple
     data = b""
     payload_size = struct.calcsize("Q")
+    cnt=0
+    tSave = time.time()
     while True:
         t = time.time()
         while len(data) < payload_size:
@@ -94,10 +91,15 @@ def main():
         frame_data = data[:msg_size]
         data  = data[msg_size:]
         frame = pickle.loads(frame_data)
+        if time.time()-tSave > 1.0:
+            cv2.imwrite('/home/cmit/dev_ws/src/wd_hga_process/TensorFlow/models/workspace/training_demo/images/{}.png'.format(cnt), frame)
+            cnt=cnt+1
+            tSave = time.time()
+
         #frame2, err = colorDetection(frame)
         #print(err)
         cv2.imshow("RECEIVING VIDEO", frame)
-        #print('FPS : ' + str(1.0/(time.time()-t)))
+        print('FPS : ' + str(1.0/(time.time()-t)))
         key = cv2.waitKey(1) & 0xFF
         if key  == ord('q'):
             break

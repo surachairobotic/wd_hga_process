@@ -22,11 +22,14 @@ frame_detect = None
 iThreadRun = 0
 x_axis_offset=0.001289
 y_axix_offset=0.001212
+robot = UR_SOCKET()
+pos=[]
+tip=[]
 Tool=[0,0,0,0,0,0]
 tResetDetector = time.time()
 
 def threadDetection():
-    global frame_detect, iThreadRun, tResetDetector,Tool
+    global frame_detect, iThreadRun, tResetDetector,pos,tip,Tool
     pos = copy.deepcopy(robot.ur_rtde.joint_pos)
     tip = copy.deepcopy(robot.ur_rtde.tip_pos)
     print('threadDetection')
@@ -57,38 +60,49 @@ def threadDetection():
     ###########################
         area_detect=(x2-x1)*(y2-y1)
         area_ideal=(ideal_end_point[0]-ideal_start_point[0])*(ideal_end_point[1]-ideal_start_point[1])
-        if (abs(area_ideal-area_detect)/area_ideal)*100 >10 :
+        if (abs(area_ideal-area_detect)/area_ideal)*100 >5 :
             if area_detect>area_ideal:
                 print("too close")
+                Tool[2]-=0.001
             if area_detect<area_ideal:
                 print("too far")
-        if (abs(area_ideal-area_detect)/area_ideal)*100 <10 :
+                Tool[2]+=0.001
+        if (abs(area_ideal-area_detect)/area_ideal)*100 <5 :
             print("z Axis :OK")
      ####################################### Z axis 
-        if abs(center_x-424)>10:
+        if abs(center_x-424)>3:
             if center_x>424:
-                print('move right')                             
+                print('move right')
                 new_pos=(center_x-424)*x_axis_offset
-                Tool[0]-=new_pos    
+                Tool[0]-=new_pos
             if center_x<424:
-                print('move left')
+                print('move left')      
                 new_pos=(424-center_x)*x_axis_offset
                 Tool[0]+=new_pos
-        if abs(center_y-240)>10:
+        if abs(center_y-240)>3:
             if center_y>240:
                 print('move up')
                 new_pos=(center_y-240)*y_axix_offset
-                Tool[1]-=new_pos
-                print(pos)              
+                Tool[1]-=new_pos   
             if center_y<240:
                 print('move down')
                 new_pos=(240-center_y)*y_axix_offset
                 Tool[1]+=new_pos
                 print(pos)
+        if abs(center_y-240) <3 and (center_x-424) <3 :
+            print("----------------------------------------- MOVE DONE-----------------------------------------")
+                
+            '''
+            if abs(y2-ideal_end_point[1])>10:
+                print('move down')
+                ur.moveX(-0.01, tip_speed, debug=True)
+                time.sleep(3)
+            '''
       ####################################### X-Y AXIS
     else:
         print("Can't Detect")
     #####################################################################
+  
     print('threadDetection - iThreadRun : {}'.format(iThreadRun))
     iThreadRun = 2
     print('threadDetection - iThreadRun : {}'.format(iThreadRun))
@@ -96,6 +110,7 @@ def threadDetection():
 
 def threadColorDetection():
     global frame_detect, iThreadRun,pos
+    
     print('threadDetection')
     #frame_detect = cv2.resize(frame_detect,(848,480))
 
@@ -170,10 +185,10 @@ def colorDetection(img):
 def ham_detect_and_adjust(ur):
     global frame_detect, iThreadRun, tResetDetector, pos, tip ,Tool
 
-    pp = [  [0.6157207196310158, -0.0034951583738285054, 0.3259457979936484,-2.1669420116783513, -2.2746159319997306,0.0002964836215492035],
-            [0.6157633906357547, -0.0033207232788505835, -0.09568281924359112, 2.1665312432692843,2.2749129756716675,-9.94432715514844e-06],
-            [0.61573910454117, -0.003344623563521177, 0.2524990991124455, 2.1666182382888155, 2.274809208082394, 3.522994048246124e-05],
-            [-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]
+    pp = [  [0.6157207196310158, -0.0034951583738285054, 0.3259457979936484,-2.1669420116783513, -2.2746159319997306, 0.0002964836215492035],
+        [0.6157633906357547, -0.0033207232788505835, -0.09568281924359112, 2.1665312432692843, 2.2749129756716675, -9.94432715514844e-06],
+        [0.61573910454117, -0.003344623563521177, 0.2524990991124455, 2.1666182382888155, 2.274809208082394, 3.522994048246124e-05],
+        [-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]
      ] # [x,y,z,r,p,y]
     robot.moveLine(pp[0], debug=False)
     
@@ -188,7 +203,7 @@ def ham_detect_and_adjust(ur):
     print(cnt)
     cnt+=1
     host_ip = '192.168.12.200' # paste your server ip address here
-    port = 1234
+    port = 2000
     print(cnt)
     cnt+=1
     client_socket.connect((host_ip,port)) # a tuple
@@ -244,10 +259,35 @@ def ham_detect_and_adjust(ur):
             print("finish2")
             iThreadRun = 0            
             
-
-        
+        #frame = cv2.imread('/home/cmit/dev_ws/ham_image/rgb_0.png')
+        cv2.imwrite('ham_scale.png',frame)
         cv2.imshow("RECEIVING VIDEO", frame)
         
+        #print('FPS : ' + str(1.0/(time.time()-t)))
+        key = cv2.waitKey(1) & 0xFF
+        '''
+        if key == ord('q'):
+            break
+        elif key == ord('w'):
+            print('w')
+            ur.moveX(0.01, tip_speed, debug=True)
+        elif key == ord('s'):
+            print('s')
+            ur.moveX(-0.01, tip_speed, debug=True)
+        elif key == ord('a'):
+            print('a')
+            ur.moveY(0.01, tip_speed, debug=True)
+        elif key == ord('d'):
+            print('d')
+            ur.moveY(-0.01, tip_speed, debug=True)
+        elif key == ord('+'):
+            print('+')
+            ur.moveZ(0.01, tip_speed, debug=True)
+        elif key == ord('-'):
+            print('-')
+            ur.moveZ(-0.01, tip_speed, debug=True)
+        '''
+
     cv2.destroyAllWindows()
     client_socket.close()
 
@@ -272,7 +312,7 @@ def Pick_From_Station(ur): #1-4 waypoint
 
     ham_detect_and_adjust(ur)
 
-    print('step 2 ur.moveLine(pp[0]) waypoint 1') ## not use
+    print('step 2 ur.moveLine(pp[0]) waypoint 1') ## observe point
     ur.moveLine(pp[0], tip_speed)
     
     
@@ -281,14 +321,14 @@ def Pick_From_Station(ur): #1-4 waypoint
     print('step 3 ur.moveLine(pp[1]) waypoint 2') ## not use
     ur.moveLine(pp[1], tip_speed)
     
-    print('step 4 grip close')
+    print('step 4 grip close')## use after detect and adjust done
     if enable_grip:
         ur.grip_close()
 
-    print('step 5 ur.moveLine(pp[2]) waypoint 3')
+    print('step 5 ur.moveLine(pp[2]) waypoint 3') #lift arm up
     ur.moveLine(pp[2], tip_speed)
     
-    print('step 6 ur.moveLine(pp[3]) waypoint 4')
+    print('step 6 ur.moveLine(pp[3]) waypoint 4')# move arm to jig in agv
     ur.moveLine(pp[3], tip_speed)
     
 def PickPlaceOnCar(ur):
@@ -317,22 +357,22 @@ def PickPlaceOnCar(ur):
             [0.615705930495875, -0.0034379305093566524, 0.32595563912016234,-2.166769598094382, -2.274694779560951, 0.0002946796220985595]#10
          ]
     
-    print('step 7 ur.moveLine(pp[0]) waypoint 5')
+    print('step 7 ur.moveLine(pp[0]) waypoint 5')# put tray to jig
     ur.moveLine(pp[0], tip_speed)
     
-    print('step 8 grip open')
+    print('step 8 grip open') #put tray
     if enable_grip:
         ur.grip_open()    
         
     return -1
     
-    print('step 9 ur.moveLine(pp[1]) waypoint 6')
+    print('step 9 ur.moveLine(pp[1]) waypoint 6') #lift arm up
     ur.moveLine(pp[1], tip_speed)
     
-    print('step 11 ur.moveLine(pp[0]) waypoint 5')
+    print('step 11 ur.moveLine(pp[0]) waypoint 5') # put arm to jig
     ur.moveLine(pp[0], tip_speed)
     
-    print('step 12 grip close')
+    print('step 12 grip close') #grab tray
     if enable_grip:
         ur.grip_close()    
     
@@ -353,9 +393,11 @@ def PickPlaceOnCar(ur):
     ur.moveLine(pp[5], tip_speed)
   
 if __name__ == '__main__':
-    robot = UR_SOCKET()
-    robot.init()
+    #ur = UR_SOCKET() # for move control
+    #ur.init()
 
+    robot.init()
+    #ur_rtde = UR_INFORMATION() # get current robot state
     ham_detect_and_adjust(10)
 
     print('Pick_From_Station')

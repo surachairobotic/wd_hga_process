@@ -60,15 +60,15 @@ def threadDetection():
     ###########################
         area_detect=(x2-x1)*(y2-y1)
         area_ideal=(ideal_end_point[0]-ideal_start_point[0])*(ideal_end_point[1]-ideal_start_point[1])
-        if (abs(area_ideal-area_detect)/area_ideal)*100 >10 :
+        if (abs(area_ideal-area_detect)/area_ideal)*100 >5 :
             if area_detect>area_ideal:
                 print("too close")
             if area_detect<area_ideal:
                 print("too far")
-        if (abs(area_ideal-area_detect)/area_ideal)*100 <10 :
+        if (abs(area_ideal-area_detect)/area_ideal)*100 <5 :
             print("z Axis :OK")
      ####################################### Z axis 
-        if abs(center_x-424)>10:
+        if abs(center_x-424)>5:
             if center_x>424:
                 print('move right')
                 
@@ -94,7 +94,7 @@ def threadDetection():
                 Tool[0]+=new_pos
                 #print("After : {}".format(tip))
                 #robot.moveLine(pos, v=0.1, block=False)
-        if abs(center_y-240)>10:
+        if abs(center_y-240)>5:
             if center_y>240:
                 print('move up')
                 
@@ -228,7 +228,7 @@ def ham_detect_and_adjust(ur):
     print(cnt)
     cnt+=1
     host_ip = '192.168.12.200' # paste your server ip address here
-    port = 1234
+    port = 2000
     print(cnt)
     cnt+=1
     client_socket.connect((host_ip,port)) # a tuple
