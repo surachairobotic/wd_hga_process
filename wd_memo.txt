@@ -1,4 +1,5 @@
-RuntimeError: Couldn't load custom C++ ops. This can happen if your PyTorch and torchvision versions are incompatible, or if you had errors while compiling torchvision from source. For further information on the compatible versions, check https://github.com/pytorch/vision#installation for the compatibility matrix. Please check your PyTorch version with torch.__version__ and your torchvision version with torchvision.__version__ and verify if they are compatible, and if not please reinstall torchvision so that it matches your PyTorch install.
+python generate_tfrecord.py -x C:/wd_hga_process/TensorFlow/models/workspace/training_demo/images/train -l C:/wd_hga_process/TensorFlow/models/workspace/training_demo/annotations/label_map.pbtxt -o C:/wd_hga_process/TensorFlow/models/workspace/training_demo/annotations/train.record
+python generate_tfrecord.py -x C:/wd_hga_process/TensorFlow/models/workspace/training_demo/images/test -l C:/wd_hga_process/TensorFlow/models/workspace/training_demo/annotations/label_map.pbtxt -o C:/wd_hga_process/TensorFlow/models/workspace/training_demo/annotations/test.record
 
 === ham get image ===
 ros2 launch realsense2_camera rs_launch.py
