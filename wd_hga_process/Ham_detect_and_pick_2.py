@@ -49,9 +49,9 @@ def threadDetection():
         end_point = (x2, y2)
         color = (255, 255, 0)
         thickness = 1
-        ideal_start_point =(301,124) ##########x1 y1 x2 y2 :301 124 565 350 center of pic
+        ideal_start_point =(325,205) ##########x1 y1 x2 y2 :301 124 565 350 center of pic
 
-        ideal_end_point =(565,350)############ 
+        ideal_end_point =(588,433)############ x1 y1 x2 y2 :325 205 588 433
 
         color_ideal=(0,0,255)
         frame = cv2.rectangle(frame_detect, ideal_start_point,  ideal_end_point, color_ideal, 1)
@@ -72,26 +72,26 @@ def threadDetection():
         if (abs(area_ideal-area_detect)/area_ideal)*100 <5 :
             print("z Axis :OK")
      ####################################### Z axis 
-        if abs(center_x-424)>3:
-            if center_x>424:
+        if abs(x2-ideal_end_point[0])>3:
+            if x2>ideal_end_point[0]:
                 print('move right')
-                new_pos=(center_x-424)*x_axis_offset
+                new_pos=(x2-ideal_end_point[0])*x_axis_offset
                 Tool[0]-=new_pos
-            if center_x<424:
+            if x2<ideal_end_point[0]:
                 print('move left')      
-                new_pos=(424-center_x)*x_axis_offset
+                new_pos=(ideal_end_point[0]-x2)*x_axis_offset
                 Tool[0]+=new_pos
-        if abs(center_y-240)>3:
-            if center_y>240:
+        if abs(y1-ideal_start_point[1])>3:
+            if y1>ideal_start_point[1]:
                 print('move up')
-                new_pos=(center_y-240)*y_axix_offset
+                new_pos=(y1-ideal_start_point[1])*y_axix_offset
                 Tool[1]-=new_pos   
-            if center_y<240:
+            if y1<ideal_start_point[1]:
                 print('move down')
-                new_pos=(240-center_y)*y_axix_offset
+                new_pos=(ideal_start_point[1]-y1)*y_axix_offset
                 Tool[1]+=new_pos
                 print(pos)
-        if abs(center_y-240) <3 and abs(center_x-424) <3 :
+        if abs(y1-ideal_start_point[1]) <3 and abs(x2-ideal_end_point[0]) <3 :
             print("----------------------------------------- MOVE DONE-----------------------------------------")
        ###################################################################################################################move robot
 
@@ -185,11 +185,7 @@ def colorDetection(img):
 def ham_detect_and_adjust(ur):
     global frame_detect, iThreadRun, tResetDetector, pos, tip ,Tool,adj_hight
 
-    pp = [  [0.6157207196310158, -0.0034951583738285054, 0.3259457979936484,-2.1669420116783513, -2.2746159319997306, 0.0002964836215492035],
-        [0.6157633906357547, -0.0033207232788505835, -0.09568281924359112, 2.1665312432692843, 2.2749129756716675, -9.94432715514844e-06],
-        [0.61573910454117, -0.003344623563521177, 0.2524990991124455, 2.1666182382888155, 2.274809208082394, 3.522994048246124e-05],
-        [-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]
-     ] # [x,y,z,r,p,y]
+    pp = [[0.6814899895774164, -0.0405411724510514, 0.3259812667947507,2.1991536910693466,2.2431889339135105,9.717629458548752e-05]] # [x,y,z,r,p,y]
     robot.moveLine(pp[0], debug=False)
     
     #exit()
@@ -203,7 +199,7 @@ def ham_detect_and_adjust(ur):
     print(cnt)
     cnt+=1
     host_ip = '192.168.12.200' # paste your server ip address here
-    port = 1234
+    port = 2001
     print(cnt)
     cnt+=1
     client_socket.connect((host_ip,port)) # a tuple
@@ -284,7 +280,9 @@ def ham_detect_and_adjust(ur):
             if enable_grip:
                 robot.grip_close()
             print("move robot up")
-            robot.moveLine(pp[2], tip_speed) 
+            new_pp=copy.deepcopy(ur_rtde.tip_pos)
+            new_pp[2] = new_pp[2]+high_offset
+            robot.moveLine(new_pp, tip_speed) 
             print("move robot arm to jig")
             robot.moveLine(pp[3], tip_speed)
             pp = [  [-0.01017494401209725, -0.3756525442585086, 0.13840573695699745,-3.1241048704483654, 0.011357524148814309, -0.0011440264047513579],#5
@@ -301,6 +299,7 @@ def ham_detect_and_adjust(ur):
                 robot.grip_open()    
             print('lift arm up') 
             robot.moveLine(pp[1], tip_speed)
+            print("********************************finish********************************")
             break
             '''
         elif key == ord('6'):
