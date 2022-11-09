@@ -3,8 +3,8 @@ import requests, threading, time, json
 
 def sendJson(num):
     # Get Request
-    host = 'http://0.0.0.0:8000/btn_call/'
-    # host = 'http://192.168.12.253:8000/btn_call/'
+    # host = 'http://0.0.0.0:8000/btn_call/'
+    host = 'http://192.168.12.252:8000/btn_call/'
     # host = 'http://192.168.12.253:8000/btn_call/'
 
     r = requests.post(host, json={"call_id": num})
@@ -60,7 +60,7 @@ class MainWindow(PageWindow):
         print(str(name + " 2"))
         self.initUI()
         self.setWindowTitle("MainWindow")
-        self.feet_ip = '0.0.0.0:8000'
+        self.feet_ip = '192.168.8.173:8000'
         self.bThread = True
         self.threadStatus = threading.Thread(target=self.getStatusThreadRun)
         self.threadStatus.start()
