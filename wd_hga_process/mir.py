@@ -5,27 +5,32 @@ from std_msgs.msg import *
 import requests, json, threading, time
 
 class MiR():
-    def __init__(self, node, robot_ip='192.168.12.20'):
+    def __init__(self, node, robot_ip='192.168.12.20', feet_ip='192.168.12.252:8000', disableButton=False):
         self.node = node
         self.robot_ip = robot_ip
         self.prefix = '/mir'
         #self.pub_robotstate = MinimalPub(node=self.node, name=self.prefix+'/robot_state', msgsType=String, topic=self.prefix+'/robot_state')
 
         self.pub_robotstate = self.node.create_publisher(String, self.prefix+'/robot_state', 10)
-        self.pub_btncall = self.node.create_publisher(String, self.prefix+'/btn_call', 10)
+        self.pub_callInfo = self.node.create_publisher(String, self.prefix+'/call_info', 10)
+        self.sub_btn_call = self.node.create_subscription(String, self.prefix+'/btn_call', self.cb_btn, 1)
         self.bThread = True
         #self.timer = self.node.create_timer(0.02, self.timer_callback)
         #self.i = 0
         
-        self.feet_ip = '0.0.0.0:8000'
+        self.feet_ip = feet_ip
         self.robotstateThreadInit()
-        self.btncallThreadInit()
+        
+        self.disableButton = disableButton
+        if not self.disableButton:
+            self.btncallThreadInit()
 
     def __del__(self):
         print('MiR del')
         self.bThread = False
         self.threadStatus.join()
-        self.threadBtnCall.join()
+        if not self.disableButton:
+            self.threadBtnCall.join()
     
     def robotstateThreadInit(self):
         # Get Request
@@ -51,7 +56,8 @@ class MiR():
             res = String()
             res.data = parsed['mission_text']
             self.pub_robotstate.publish(res)
-            self.postRobotstate(res.data)
+            if not self.disableButton:
+                self.postRobotstate(res.data)
             #print(time.time()-t)
             time.sleep(0.5)
 
@@ -75,15 +81,24 @@ class MiR():
             res.data = str(parsed['call_id'])
             #print('res.data : ' + res.data)
             if int(res.data) != -1:
-                self.pub_btncall.publish(res)
+                self.pub_callInfo.publish(res)
                 self.goto_pos(int(res.data))
             time.sleep(0.5)
 
+    def cb_btn(self, msg):
+        print('msg: ', msg.data)
+        pnt = int(msg.data)
+        if pnt > 0 and pnt <= 6:
+            self.goto_pos(pnt)
 
     def goto_pos(self, _num):
-        pos = [ 'be4da03e-c876-11ec-8696-0001299a3e90',
-                'd9dc1dba-c876-11ec-8696-0001299a3e90',
-                'ea86df57-c876-11ec-8696-0001299a3e90' ]
+        pos = [ '1875eb4e-3fc3-11ed-84c3-0001299a3e90', # ku_goPos_1
+                '40b37c04-3fc3-11ed-84c3-0001299a3e90', # ku_goPos_2
+                'ea86df57-c876-11ec-8696-0001299a3e90', # 
+                '80ac3e98-0e63-11ed-843d-0001299a3e90',
+                'bdffb631-15bb-11ed-ae82-0001299a3e90',
+                'd74f2c17-15bb-11ed-ae82-0001299a3e90',
+ ]
         mission_id = {"mission_id": pos[_num-1]}
 
         # Get Request

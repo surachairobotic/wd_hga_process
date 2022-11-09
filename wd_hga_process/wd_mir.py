@@ -2,7 +2,7 @@ import rclpy
 from wd_hga_process.mir import *
 
 def main(args=None):
-    print('Hi from wd_hga_process. 1')
+    print('Hi from wd_hga_process. 11111111111')
     rclpy.init(args=args)
     print('Hi from wd_hga_process. 2')
     node = rclpy.create_node('wd_mir')

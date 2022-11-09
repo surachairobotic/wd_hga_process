@@ -1,14 +1,33 @@
+RuntimeError: Couldn't load custom C++ ops. This can happen if your PyTorch and torchvision versions are incompatible, or if you had errors while compiling torchvision from source. For further information on the compatible versions, check https://github.com/pytorch/vision#installation for the compatibility matrix. Please check your PyTorch version with torch.__version__ and your torchvision version with torchvision.__version__ and verify if they are compatible, and if not please reinstall torchvision so that it matches your PyTorch install.
+
+=== ham get image ===
+ros2 launch realsense2_camera rs_launch.py
+ros2 run wd_hga_process wd_cam   # for save rgb_detect.png
+ros2 run wd_hga_process wd_detector  # copy rgb_detect.png to rgb_detect2.png and detect
+**  /home/cmit/dev_ws/ham_image  **
+
+=== monitor ===
+https://askubuntu.com/questions/453109/add-fake-display-when-no-monitor-is-plugged-in
+
+=== notebook ===
+
+
 === ros2 ===
 ros2 pkg create --build-type ament_cmake ament_python --node-name my_node my_package
+ros2 pkg create --build-type ament_cmake --node-name pc2_process pc_handle
 colcon build --symlink-install --packages-select wd_hga_process
+colcon build --symlink-install --packages-select pc_handle
+colcon build --symlink-install --packages-select imu_tools
 
 === terminal ===
 . install/local_setup.sh
-python -m uvicorn wd_webserver:app --reload --host 0.0.0.0
+python3 -m uvicorn wd_webserver:app --reload --host 0.0.0.0
+python3 ~/dev_ws/src/wd_hga_process/wd_hga_process/btncall_gui.py
 ros2 run wd_hga_process wd_mir
-python ~/dev_ws/src/wd_hga_process/wd_hga_process/btncall_gui.py
 ros2 topic echo /mir/robot_state
 ros2 topic echo /mir/btn_call
+ros2 topic pub /mir/btn_call std_msgs/String "data: 5"
+ros2 run pc_handle pc2_process
 
 roslaunch warehouse_simulation warehouse_navigation.launch map_file:=/home/probook/catkin_ws/src/maps/warehouse_gmapping.yaml
 
@@ -48,3 +67,23 @@ curl -X POST "http://192.168.12.20/api/v2.0.0/robots" -H  "accept: application/j
 	"guid": "ea86df57-c876-11ec-8696-0001299a3e90",
 	"name": "GoTo_Pos_3"
 }]
+
+
+
+
+UR control node
+
+1. ใช้ python ส่งคำสั่ง URScript
+   - ควบคุมหุ่นยนต์ได้
+   - อ่านค่า robot status ไม่ได้ [https://forum.universal-robots.com/t/decode-return-value/18631]
+   - ยังคุยกับ gripper ไม่ได้
+2. ใช้ library ใน github ชื่อ python-urx [https://github.com/SintefManufacturing/python-urx]
+   - ควบคุมหุ่นยนต์ได้
+   - อ่านค่าได้
+   - ควบคุม gripper ได้
+   - แต่ใช้ไปสักพักก็จะ error และต้อง reconnect 4-5 ครั้ง ถึงจะเชื่อมต่อได้ใหม่
+3. ใช้ MoveIt! ของ ROS2
+   - อ่านค่าได้
+   - ควบคุม UR, Gripper ยังไม่ได้
+   - ใช้ไปสักพักก็จะ error
+   
