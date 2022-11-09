@@ -1,10 +1,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import requests, threading, time, json
 
-def sendJson(num):
+def sendJson(num, ip_port):
     # Get Request
-    host = 'http://192.168.8.173:8000/btn_call/'
-    # host = 'http://192.168.12.253:8000/btn_call/'
+    host = 'http://'+ip_port+'/btn_call/'
+    #host = '0.0.0.0:8000/btn_call/'
     # host = 'http://192.168.12.253:8000/btn_call/'
 
     r = requests.post(host, json={"call_id": num})
@@ -53,6 +53,7 @@ class MainWindow(PageWindow):
         super().__init__()
         self.font = f
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        self.parent = parent
 
         name = 'MainWindow'
         print(str(name + " 1"))
@@ -60,7 +61,7 @@ class MainWindow(PageWindow):
         print(str(name + " 2"))
         self.initUI()
         self.setWindowTitle("MainWindow")
-        self.feet_ip = '192.168.8.173:8000'
+        #self.feet_ip = '192.168.8.173:8000'
         self.bThread = True
         self.threadStatus = threading.Thread(target=self.getStatusThreadRun)
         self.threadStatus.start()
@@ -78,7 +79,7 @@ class MainWindow(PageWindow):
         print(self.headers)
 
         while self.bThread:
-            _host = 'http://' + self.feet_ip + '/robotstate'
+            _host = 'http://' + self.parent.ip_webserver + '/robotstate'
             get_status = requests.get(_host, headers=self.headers)
             #print(get_status)
             parsed = json.loads(get_status.content)            
@@ -109,11 +110,11 @@ class MainWindow(PageWindow):
         self.robotstateLabel = QtWidgets.QLabel("Robot Status : READY")
 
         hLayout = QtWidgets.QHBoxLayout()
-        hLayout.addWidget(pWidgets(btn_1, lambda: sendJson(2)), 1)
-        hLayout.addWidget(pWidgets(btn_2, lambda: sendJson(3)), 1)
+        hLayout.addWidget(pWidgets(btn_1, lambda: sendJson(2, ip_port=self.parent.ip_webserver)), 1)
+        hLayout.addWidget(pWidgets(btn_2, lambda: sendJson(3, ip_port=self.parent.ip_webserver)), 1)
 
         vLayout = QtWidgets.QVBoxLayout()
-        vLayout.addWidget(pWidgets(btn_call, lambda: sendJson(1)), 1)
+        vLayout.addWidget(pWidgets(btn_call, lambda: sendJson(1, ip_port=self.parent.ip_webserver)), 1)
         vLayout.addLayout(hLayout, 1)
         vLayout.addWidget(pWidgets(self.robotstateLabel), 1)
 
@@ -130,8 +131,9 @@ class MainWindow(PageWindow):
         return handleButton
 
 class Window(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, ip_webserver=None):
         super().__init__()
+        self.ip_webserver = ip_webserver
         self.font = QtGui.QFont("Arial", 7, QtGui.QFont.Bold)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
 
@@ -178,9 +180,11 @@ class Window(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     import sys
     
+    IP_WEBSERVER = '192.168.12.252:8000'
+    
     app = QtWidgets.QApplication(sys.argv)
     
-    w = Window(app)
+    w = Window(parent=app, ip_webserver=IP_WEBSERVER)
     w.show()
 
     sys.exit(app.exec_())
