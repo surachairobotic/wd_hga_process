@@ -5,7 +5,7 @@ from std_msgs.msg import *
 import requests, json, threading, time
 
 class MiR():
-    def __init__(self, node, robot_ip='192.168.12.20', disableButton=True):
+    def __init__(self, node, robot_ip='192.168.12.20', feet_ip='192.168.12.252:8000', disableButton=False):
         self.node = node
         self.robot_ip = robot_ip
         self.prefix = '/mir'
@@ -18,7 +18,7 @@ class MiR():
         #self.timer = self.node.create_timer(0.02, self.timer_callback)
         #self.i = 0
         
-        self.feet_ip = '192.168.8.173:8000'
+        self.feet_ip = feet_ip
         self.robotstateThreadInit()
         
         self.disableButton = disableButton
@@ -92,9 +92,9 @@ class MiR():
             self.goto_pos(pnt)
 
     def goto_pos(self, _num):
-        pos = [ 'be4da03e-c876-11ec-8696-0001299a3e90',
-                'd9dc1dba-c876-11ec-8696-0001299a3e90',
-                'ea86df57-c876-11ec-8696-0001299a3e90',
+        pos = [ '1875eb4e-3fc3-11ed-84c3-0001299a3e90', # ku_goPos_1
+                '40b37c04-3fc3-11ed-84c3-0001299a3e90', # ku_goPos_2
+                'ea86df57-c876-11ec-8696-0001299a3e90', # 
                 '80ac3e98-0e63-11ed-843d-0001299a3e90',
                 'bdffb631-15bb-11ed-ae82-0001299a3e90',
                 'd74f2c17-15bb-11ed-ae82-0001299a3e90',

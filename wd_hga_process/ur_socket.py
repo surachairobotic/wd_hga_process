@@ -65,9 +65,9 @@ class UR_SOCKET():
         msg = 'stopj(2)'
         self.send(msg)
     
-    def moveLine(self, p, v=0.1, debug=False, err=0.0005, block=True):
+    def moveLine(self, p, v=1, debug=False, err=0.0005, block=True): #v=0.1
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
-        msg = 'movep(p[{}],a=0.1,v={},r=0)'.format(pose, v)
+        msg = 'movep(p[{}],a=0.1,v={},r=0)'.format(pose, v)#a=0.1
         print(msg)
         self.send(msg)
         if debug:
@@ -83,9 +83,9 @@ class UR_SOCKET():
         if block:
             self.blockJ(j, debug=debug)
 
-    def moveTool(self, p, v=0.01, block=True, exceptStop=False):
+    def moveTool(self, p, v=0.05, block=True, exceptStop=False): #v=0.01
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
-        msg = 'movel(pose_trans(get_actual_tcp_pose(),p[{}]),a=0.01, v={})'.format(pose, v)
+        msg = 'movel(pose_trans(get_actual_tcp_pose(),p[{}]),a=0.01, v={})'.format(pose, v)#a=0.01
         #msg = 'speedl([{},{},{},0,0,0],a=0.1,t=1.0)'.format(x, y, z)
         self.send(msg)
         time.sleep(0.2)
