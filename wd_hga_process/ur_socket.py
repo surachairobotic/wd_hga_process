@@ -75,7 +75,7 @@ class UR_SOCKET():
         if block:
             self.blockL(p, err=err, debug=debug)
 
-    def moveJ(self, j, v=0.1, debug=False, block=True):
+    def moveJ(self, j, v=1, debug=False, block=True):
         pose = "{},{},{},{},{},{}".format(j[0], j[1], j[2], j[3], j[4], j[5])
         msg = 'movej([{}],a=0.1,v={},t=0,r=0)'.format(pose, v)
         #print(msg)

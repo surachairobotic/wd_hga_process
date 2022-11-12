@@ -371,7 +371,7 @@ def draw2(frame, contours, color, ref):
         cv2.drawContours(image=frame_detect, contours=contours, contourIdx=i, color=color, thickness=2, lineType=cv2.LINE_AA)
     return frame
 
-def detect_and_adjust(host_ip = '192.168.137.62', port = 1234): #192.168.12.200
+def detect_and_adjust(host_ip = '192.168.12.195', port = 1234): #192.168.12.200
     global frame_detect, iThreadRun, h, s, v, robot, bAutomate, oldTarget, debug_hsv, center_point, imageTheta, target_theta, target_cmd, dz
 
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
@@ -480,7 +480,8 @@ def detect_and_adjust(host_ip = '192.168.137.62', port = 1234): #192.168.12.200
             elif e_theta < -0.01:
                 current_cmd[5] = -offset
             print('{}, {}'.format(target_cmd, current_cmd))
-            if target_cmd != current_cmd:
+            #if target_cmd != current_cmd:
+            if not compare(np.sign(target_cmd), np.sign(current_cmd)):
                 v = 0.025
                 if current_cmd[5] != 0:
                     v=0.006
@@ -554,6 +555,15 @@ def detect_and_adjust(host_ip = '192.168.137.62', port = 1234): #192.168.12.200
 
     cv2.destroyAllWindows()
     client_socket.close()
+
+def compare(a, b):
+    n = len(a)
+    if n != len(b):
+        return False
+    for i in range(n):
+        if int(a[i]) != int(b[i]):
+            return False
+    return True
 
 def Err(a, b):
     _err = 0.0

@@ -66,8 +66,8 @@ while True:
             print("Joint : {}".format(j))
             print("TCP: pos ["+str(X)+", "+str(Y)+", "+str(Z)+"] m, rot ["+str(RX)+", "+str(RY)+", "+str(RZ)+"] rad")
             #joint = rtde_c.getInverseKinematics([X,Y,Z], [RX,RY,RZ], 1.0, 1.0)
-            joint = kin.invKine(state.actual_TCP_pose, j)
-            print(joint)
+            #joint = kin.invKine(state.actual_TCP_pose, j)
+            #print(joint)
             #print(jj)
             time.sleep(0.1)
 
