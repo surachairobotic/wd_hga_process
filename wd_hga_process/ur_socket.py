@@ -83,14 +83,27 @@ class UR_SOCKET():
         if block:
             self.blockJ(j, debug=debug)
 
-    def moveTool(self, p, v=0.05, block=True, exceptStop=False): #v=0.01
+    def moveTool(self, p, v=0.05, block=True, exceptStop=False, debug=False): #v=0.01
         pose = "{},{},{},{},{},{}".format(p[0], p[1], p[2], p[3], p[4], p[5])
         msg = 'movel(pose_trans(get_actual_tcp_pose(),p[{}]),a=0.01, v={})'.format(pose, v)#a=0.01
         #msg = 'speedl([{},{},{},0,0,0],a=0.1,t=1.0)'.format(x, y, z)
+        oldTarget = copy.deepcopy(self.ur_rtde.target_tool_pos)
         self.send(msg)
-        time.sleep(0.2)
+        #err = self.calError(self.ur_rtde.target_tool_pos, oldTarget)
         if block:
-            self.blockP(debug=False, exceptStop=exceptStop)
+            while True:
+                err = self.calError(self.ur_rtde.target_tool_pos, oldTarget)
+                #print('moveTool err[', err, '] old:current ==> ', oldTarget, ' : ', self.ur_rtde.target_tool_pos)
+                if err > 0.05:
+                    break
+                time.sleep(0.01)
+            #self.blockP(debug=False, exceptStop=exceptStop)
+            while True:
+                err = 0.0
+                for x in self.ur_rtde.joint_velo:
+                    err += abs(x)
+                if err < 0.001:
+                    break
         '''
         print('==============')
         print(self.ur_rtde.target_tool_pos, " : ", self.ur_rtde.target_joint)
@@ -111,9 +124,11 @@ class UR_SOCKET():
         time.sleep(6.0)
 
     def calError(self, actual, target):
+        #print('actual=', actual, ', target=', target)
         e = 0
         for i in range(len(actual)):
             e += math.sqrt(pow(actual[i]-target[i], 2))
+        #print('err=', e, ', actual=', actual, ', target=', target)
         return e
 
     def blockP(self, err=0.0001, debug=False, exceptStop=False):
