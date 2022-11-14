@@ -12,8 +12,6 @@ import requests, threading, time, json
 from hsv_detection import *
 
 robot = UR_SOCKET()
-tip_speed = 0.2
-
 pos=[]
 tip=[]
 Tool=[0,0,0,0,0,0]
@@ -230,7 +228,7 @@ def adjust():
                     bAutomate = 0
         elif bAutomate == 20:
             print('moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0]')
-            robot.moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0], 0.05, block=True, exceptStop=True)
+            robot.moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0], 0.07, block=True, exceptStop=True)
             while True:
                 err = 0.0
                 for x in robot.ur_rtde.joint_velo:
@@ -347,11 +345,26 @@ if __name__ == '__main__':
     print('car2station')
     robot.init()
     
-    jj = [  [1.1903325319290161, -1.8719140491881312, 1.62439471880068, -1.321559564476349, -1.5631573835956019, 2.7640068531036377]
+    '''
+    over car
+    Joint : [1.1900781393051147, -1.8786550960936488, 1.6523898283587855, -1.3427302998355408, -1.5630763212787073, 2.764693260192871]
+    TCP: pos [-0.007583460058656687, -0.37736000459046504, 0.3247866033575867] m, rot [-3.14142698997794, 0.009354814800434154, -0.00021372635081474143] rad
+
+    place on car
+    Joint : [1.188525915145874, -1.8645268879332484, 2.1453784147845667, -1.8499347172179164, -1.5629962126361292, 2.7674479484558105]
+    TCP: pos [-0.007576178412409958, -0.3773818028145571, 0.12986619843536518] m, rot [-3.1414985027277504, 0.009336444075501774, -0.00018903153494215214] rad
+    '''
+
+    jj = [  [1.1900781393051147, -1.8786550960936488, 1.6523898283587855, -1.3427302998355408, -1.5630763212787073, 2.764693260192871],
+            [1.188525915145874, -1.8645268879332484, 2.1453784147845667, -1.8499347172179164, -1.5629962126361292, 2.7674479484558105]
          ] # radian
-    pp = [  [-0.007828889502697804, -0.37811824691844165, 0.33376358921559546, -3.141496661051462, 0.008164449775267655, -0.00011932026040040477]
+    pp = [  [-0.007583460058656687, -0.37736000459046504, 0.3247866033575867, -3.14142698997794, 0.009354814800434154, -0.00021372635081474143],
+            [-0.007576178412409958, -0.3773818028145571, 0.12986619843536518, -3.1414985027277504, 0.009336444075501774, -0.00018903153494215214]
          ] # [x,y,z,r,p,y]
 
+
+
+    tip_speed = 0.25
     step = [2,1]
 
     print('step 1 grip open')
@@ -360,6 +373,10 @@ if __name__ == '__main__':
     robot.moveLine(pp[0], tip_speed)
     print('step 3 move to station A')
     sendJson(step[0], IP_WEBSERVER)    
+
+    print('step 6 detection thread start')
+    threadDetect = threading.Thread(target=detect, args=(IP_CAMERA,))
+    threadDetect.start()
     time.sleep(5.0)
 
     t = time.time()
@@ -373,28 +390,34 @@ if __name__ == '__main__':
     print('step 4 moveJ to camera ready position')
     new_pose = copy.deepcopy(jj[0])
     new_pose[0] = new_pose[0]+(math.pi/2.0)
-    robot.moveJ(new_pose, 0.5)
+    robot.moveJ(j=new_pose, v=math.pi/2.0)
     
     print('step 5 moveTool y+0.1')
-    robot.moveTool([0,0.2,0,0,0,0], v=0.025, block=True)
+    #robot.moveTool([0,0.2,0,0,0,0], v=0.025, block=True)
+    robot.moveTool([0,0.2,0,0,0,0], v=tip_speed, block=True)
     time.sleep(1.0)
 
+    '''
     print('step 6 detection thread start')
     threadDetect = threading.Thread(target=detect, args=(IP_CAMERA,))
     threadDetect.start()
     time.sleep(5.0)
+    '''
 
     print('step 7 adjust start')
     adjust()
-    time.sleep(5.0)
+    #time.sleep(5.0)
 
     print('step 8 grip close')
     robot.grip_close()
     print('step 9 moveTool z-0.4')
-    robot.moveTool([0,0,-0.4,0,0,0], block=True)
+    robot.moveTool([0,0,-0.2,0,0,0], v=0.1, block=True)
     #time.sleep(7.5)
     print('step 10 moveLine to home pose')
-    robot.moveLine(pp[0], tip_speed)
+    robot.moveLine(pp[0], tip_speed, block=True)
+    robot.moveLine(pp[1], v=0.1, block=True)
+    robot.grip_open()
+    robot.moveLine(pp[0], v=0.1, block=True)
     
     print('step 11 move to station B')
     sendJson(step[1], IP_WEBSERVER)
@@ -406,14 +429,20 @@ if __name__ == '__main__':
         if msgs.find('Waiting for new missions') != -1:
             break
         time.sleep(0.1)
-        
+    
+    robot.moveLine(pp[0], tip_speed, block=True)
+    robot.moveLine(pp[1], v=0.1, block=True)
+    robot.grip_close()
+    robot.moveLine(pp[0], v=0.1, block=True)
+    
+    
     print('step 12 moveJ to camera ready position')
     new_pose = copy.deepcopy(jj[0])
     new_pose[0] = new_pose[0]+(math.pi/2.0)
-    robot.moveJ(new_pose, 0.3)
+    robot.moveJ(j=new_pose, v=1.0)
     
     print('step 13 moveTool y+0.1')
-    robot.moveTool([0,0.1,0,0,0,0], v=0.025, block=True)
+    robot.moveTool([0,0.1,0,0,0,0], v=tip_speed, block=True)
     #time.sleep(1.0)
 
     print('step 14 adjust start')
@@ -421,7 +450,7 @@ if __name__ == '__main__':
     print('step 15 grip open')
     robot.grip_open()
     print('step 16 moveTool z-0.4')
-    robot.moveTool([0,0,-0.4,0,0,0], block=True)
+    robot.moveTool([0,0,-0.2,0,0,0], v=0.1, block=True)
     #time.sleep(5.0)
     print('step 17 moveLine to home pose')
     robot.moveLine(pp[0], tip_speed)
