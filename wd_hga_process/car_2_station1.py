@@ -368,17 +368,18 @@ if __name__ == '__main__':
     step = [2,1]
 
     print('step 1 grip open')
-    robot.grip_open()
+    #robot.grip_open()
     print('step 2 moveLine to home pose')
     robot.moveLine(pp[0], tip_speed)
     print('step 3 move to station A')
-    sendJson(step[0], IP_WEBSERVER)    
+    #sendJson(step[0], IP_WEBSERVER)    
 
     print('step 6 detection thread start')
     threadDetect = threading.Thread(target=detect, args=(IP_CAMERA,))
     threadDetect.start()
     time.sleep(5.0)
 
+    '''
     t = time.time()
     while (time.time()-t) < 30.0:
         msgs = getStatus(IP_WEBSERVER)
@@ -386,6 +387,7 @@ if __name__ == '__main__':
         if msgs.find('Waiting for new missions') != -1:
             break
         time.sleep(0.1)
+    '''
 
     print('step 4 moveJ to camera ready position')
     new_pose = copy.deepcopy(jj[0])
@@ -396,7 +398,7 @@ if __name__ == '__main__':
     #robot.moveTool([0,0.2,0,0,0,0], v=0.025, block=True)
     robot.moveTool([0,0.2,0,0,0,0], v=tip_speed, block=True)
     time.sleep(1.0)
-
+    exit()
     '''
     print('step 6 detection thread start')
     threadDetect = threading.Thread(target=detect, args=(IP_CAMERA,))
