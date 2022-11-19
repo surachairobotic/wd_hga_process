@@ -254,10 +254,18 @@ def ham_detect_and_adjust(ur):
             #robot.moveLine(tip, v=0.01, block=True)
             robot.moveTool(Tool)
             print("TOOL : {}".format(Tool))
+            iThreadRun = 3
+        elif iThreadRun == 3:
+            '''
             Tool=[0,0,0,0,0,0]
             cv2.imshow("Detection", frame_detect)
             print("finish2")
-            iThreadRun = 0            
+            '''
+            allSpeed = 0.0
+            for j in robot.ur_rtde.joint_pos:
+                allSpeed += j
+            if allSpeed == 0.0:
+                iThreadRun = 0
             
         #frame = cv2.imread('/home/cmit/dev_ws/ham_image/rgb_0.png')
         

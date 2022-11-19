@@ -280,8 +280,12 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
     tShow = time.time()
     #print('while loop')
 
-    kx=0.0005997452962869177
-    ky=0.0010742776159686715
+    kx=0.0009481000202507924
+    ky=0.0009637579043316474
+    kz=0.000790667643933997
+    
+    kx2=0.0006921136932012477
+    ky2=0.0006951284260666848
 
     while True:
         t = time.time()
@@ -329,17 +333,23 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
         
         if key == ord('j'):
             bAutomate = 0
+            current_cmd = [0,0,0,0,0,0]
+            current_cmd[1] = (15*ky)
+            robot.moveTool(current_cmd, v=0.005, block=False)
             print('bAutomate = ', bAutomate)
         elif key == ord('k'):
-            bAutomate += 1
+            bAutomate = 2
             print('bAutomate = ', bAutomate)
         elif key == ord('l'):
             bAutomate = 5
             print('bAutomate = ', bAutomate)
+        elif key == ord(';'):
+            bAutomate = 11
+            print('bAutomate = ', bAutomate)
         
         height, width, _ = frame_detect.shape
-        #ez = dz[0]-372.16259887312697
-        ez = dz[0]-242.09
+        ez2 = dz[0]-372.16259887312697
+        ez = dz[0]-270
         target_theta = 3.112031375024515
         target_cx = width/2
         target_cy = height/2
@@ -357,53 +367,59 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
         diff : xy=[[-5, -206]]
         kx=-0.24289684499620168/-405=0.0005997452962869177
         ky=-0.2213011888895463/-206=0.0010742776159686715
-        
         '''
         
         e, ex, ey = dist((target_cx, target_cy), center_point)
         e_theta = imageTheta-target_theta
-        print("[{}], ex={}, ey={}, e_theta={}, ez={}".format(bAutomate, ex, ey, e_theta, ez))
-        #print("robot.tip={}, xy={}, dz={}".format(robot.ur_rtde.tip_pos[:3], center_point, dz))
+        #print("[{}], ez={}, ez2={}, robot.z={}, dz={}".format(bAutomate, ez, ez2, robot.ur_rtde.tip_pos[2], dz[0]))
+        print("{},{}".format(robot.ur_rtde.tip_pos[2], dz[0]))
         if bAutomate == 1: # press k
             current_cmd = [0,0,0,0,0,0]
             if ey > 5:
-                current_cmd[0] = -(ey*ky) #offset
+                current_cmd[1] = (abs(ey)*ky) #offset
             elif ey < -5:
-                current_cmd[0] = (ey*ky)
-            '''
-            if ey > 5:
-                current_cmd[1] = ey*ky #offset
-            elif ey < -5:
-                current_cmd[1] = -(ey*ky)
-            '''
+                current_cmd[1] = -(abs(ey)*ky)
+            if ex > 5:
+                current_cmd[0] = (abs(ex)*kx) #offset
+            elif ex < -5:
+                current_cmd[0] = -(abs(ex)*kx)
+
             print('current_cmd = ', current_cmd)
             robot.moveTool(current_cmd, v=0.005, block=False)
             bAutomate=0
         elif bAutomate == 2: # press k
-            vel = [0,0,0,0,0,0]
-            if abs(ey) < 5:
-                robot.moveTool(vel, block=False)
+            current_cmd = [0,0,0,0,0,0]
+            #if ez2 < -5:
+            #    current_cmd[2] = (abs(ez2)*kz)
+            current_cmd[2] = -0.01
+            robot.moveTool(current_cmd, block=False)
+            bAutomate=0
         elif bAutomate == 3: # press k
             vel = [0,0,0,0,0,0]
             if abs(e_theta) < 0.01:
                 robot.moveTool(vel, block=False)
         
+        # ===========================================================
+
         if bAutomate == 5 or bAutomate == 10: # press l
             current_cmd = [0,0,0,0,0,0]
             if e_theta > 0.01:
                 current_cmd[5] = -offset
             elif e_theta < -0.01:
                 current_cmd[5] = offset
-            if ez > 1.0:
+            local_ez = copy.deepcopy(ez)
+            if bAutomate >= 10:
+                local_ez = copy.deepcopy(ez2)
+            if local_ez > 1.0:
                 current_cmd[2] = -offset
-            elif ez < -1.0:
+            elif local_ez < -1.0:
                 current_cmd[2] = offset
             print('{}, {}'.format(target_cmd, current_cmd))
             #if target_cmd != current_cmd:
             if not compare(np.sign(target_cmd), np.sign(current_cmd)):
                 v = 0.025
                 if current_cmd[5] != 0:
-                    v=0.006
+                    v=0.005
                 if bAutomate >= 10:
                     v = 0.005
                 #robot.stop()
@@ -411,38 +427,40 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
                 target_cmd = copy.deepcopy(current_cmd)
             if target_cmd == [0,0,0,0,0,0]:
                 if bAutomate == 5:
-                    bAutomate = 0
+                    bAutomate = 6
                 else:
                     bAutomate = 11
         elif bAutomate == 6 or bAutomate == 11:
             current_cmd = [0,0,0,0,0,0]
-            if ex > 5:
-                current_cmd[0] = offset
-            elif ex < -5:
-                current_cmd[0] = -offset
-            if ey > 5:
-                current_cmd[1] = offset
-            elif ey < -5:
-                current_cmd[1] = -offset
-            print('{}, {}'.format(target_cmd, current_cmd))
-            #if target_cmd != current_cmd:
-            if not compare(np.sign(target_cmd), np.sign(current_cmd)):
-                v = 0.025
-                if bAutomate >= 10 or ez > 0.0:
-                    v = 0.005
-                #robot.stop()
-                robot.moveTool(current_cmd, v, block=False)
+            tolerance = 5
+            local_kx = kx
+            local_ky = ky
+            if bAutomate >= 10:
+                tolerance = 1
+                local_kx = kx2
+                local_ky = ky2
+            if ey > tolerance:
+                current_cmd[1] = (abs(ey)*local_ky) #offset
+            elif ey < -tolerance:
+                current_cmd[1] = -(abs(ey)*local_ky)
+            if ex > tolerance:
+                current_cmd[0] = (abs(ex)*local_kx) #offset
+            elif ex < -tolerance:
+                current_cmd[0] = -(abs(ex)*local_kx)
+
+            print('current_cmd=', current_cmd)
+            if sum(current_cmd) != 0.0:
+                robot.moveTool(current_cmd, v=0.025, block=True)
                 target_cmd = copy.deepcopy(current_cmd)
-            if target_cmd == [0,0,0,0,0,0]:
-                if bAutomate == 6:
-                    bAutomate = 7
-                else:
-                    bAutomate = 12
+            if bAutomate == 6:
+                bAutomate = 0
+            else:
+                bAutomate = 0
         elif bAutomate == 7 or bAutomate == 12:
             current_cmd = [0,0,0,0,0,0]
-            if ez > 1.0:
+            if ez2 > 1.0:
                 current_cmd[2] = -offset
-            elif ez < -1.0:
+            elif ez2 < -1.0:
                 current_cmd[2] = offset
             print('{}, {}'.format(target_cmd, current_cmd))
             #if target_cmd != current_cmd:
@@ -460,9 +478,9 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
                     bAutomate = 13
         elif bAutomate == 8 or bAutomate == 13:
             current_cmd = [0,0,0,0,0,0]
-            if ez > 7.0:
+            if ez2 > 7.0:
                 current_cmd[2] = -offset
-            elif ez < -1.0:
+            elif ez2 < -1.0:
                 current_cmd[2] = offset
             if ex > 1:
                 current_cmd[0] = offset
@@ -479,7 +497,7 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
             #print('{}, {}'.format(target_cmd, current_cmd))
             if target_cmd != current_cmd or bFirst:
                 bFirst = False
-                v = 0.002
+                v = 0.01
                 if current_cmd[5] != 0:
                     v=0.001
                 #robot.stop()

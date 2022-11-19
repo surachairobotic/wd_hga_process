@@ -363,7 +363,6 @@ if __name__ == '__main__':
          ] # [x,y,z,r,p,y]
 
 
-
     tip_speed = 0.25
     step = [2,1]
 
@@ -377,7 +376,7 @@ if __name__ == '__main__':
     print('step 6 detection thread start')
     threadDetect = threading.Thread(target=detect, args=(IP_CAMERA,))
     threadDetect.start()
-    time.sleep(5.0)
+    #time.sleep(5.0)
 
     '''
     t = time.time()
@@ -396,7 +395,7 @@ if __name__ == '__main__':
     
     print('step 5 moveTool y+0.1')
     #robot.moveTool([0,0.2,0,0,0,0], v=0.025, block=True)
-    robot.moveTool([0,0.2,0,0,0,0], v=tip_speed, block=True)
+    robot.moveTool([0,0.2,0.05,0,0,0], v=tip_speed, block=True)
     time.sleep(1.0)
     exit()
     '''
