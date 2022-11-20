@@ -111,6 +111,7 @@ class UR_SOCKET():
                 if err > 0.05:
                     break
                 time.sleep(0.01)
+            time.sleep(0.5)
             #self.blockP(debug=False, exceptStop=exceptStop)
             while True:
                 err = 0.0

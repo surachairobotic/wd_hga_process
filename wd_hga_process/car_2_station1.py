@@ -17,7 +17,7 @@ tip=[]
 Tool=[0,0,0,0,0,0]
 
 IP_WEBSERVER = '192.168.12.252:8000'
-IP_CAMERA = '192.168.12.195'
+IP_CAMERA = '192.168.12.251'
 
 frame_detect = None
 errTheta = 0.0
@@ -104,42 +104,96 @@ def detect(host_ip, port = 1234):
     cv2.destroyAllWindows()
     client_socket.close()
 
+def getZforMove(current, target):
+    current_z = redDistance2robotZ(current)
+    target_z = redDistance2robotZ(target)
+    return current_z-target_z
+
+def redDistance2robotZ(_in):
+    coeff = [-1.06696161e-11, 1.75842516e-08, -8.44855503e-06, 5.80445262e-01]
+    res = (coeff[0]*pow(_in,4)) + (coeff[1]*pow(_in,3)) + (coeff[2]*pow(_in,2)) + coeff[3] 
+    return res
 
 def adjust():
     global frame_detect, iThreadRun, h, s, v, robot, bAutomate, oldTarget, debug_hsv, center_point, imageTheta, target_theta, target_cmd, dz
+
     bAutomate = 5
     offset = 10.0
     bFirst = True
+
+    kx=0.0009481000202507924
+    ky=0.0009637579043316474
+    
+    kx2=0.0006921136932012477
+    ky2=0.0006951284260666848
+
     while True:
         if frame_detect is None:
             time.sleep(0.5)
             continue
         height, width, _ = frame_detect.shape
-        ez = dz[0]-372.16259887312697
+        ez2 = dz[0]-372.16259887312697
+        ez = dz[0]-270
         target_theta = 3.112031375024515
         target_cx = width/2
         target_cy = height/2
-
-        if bAutomate >= 10:
-            target_cx = 464
-            target_cy = 363
                 
         e, ex, ey = dist((target_cx, target_cy), center_point)
         e_theta = imageTheta-target_theta
-        print("[{}], ex={}, ey={}, e_theta={}, ez={}".format(bAutomate, ex, ey, e_theta, ez))
+        print("[{}], ez={}, ez2={}, robot.z={}, dz={}".format(bAutomate, ez, ez2, robot.ur_rtde.tip_pos[2], dz[0]))
+        #print("{},{}".format(robot.ur_rtde.tip_pos[2], dz[0]))
+        if bAutomate == 1: # press k
+            current_cmd = [0,0,0,0,0,0]
+            if ey > 5:
+                current_cmd[1] = (abs(ey)*ky) #offset
+            elif ey < -5:
+                current_cmd[1] = -(abs(ey)*ky)
+            if ex > 5:
+                current_cmd[0] = (abs(ex)*kx) #offset
+            elif ex < -5:
+                current_cmd[0] = -(abs(ex)*kx)
+
+            print('current_cmd = ', current_cmd)
+            robot.moveTool(current_cmd, v=0.005, block=False)
+            bAutomate=0
+        elif bAutomate == 2: # press k
+            current_cmd = [0,0,0,0,0,0]
+            current_cmd[2] = getZforMove(dz[0], 372.16259887312697)
+            robot.moveTool(current_cmd, block=False)
+            bAutomate=0
+        elif bAutomate == 3: # press k
+            vel = [0,0,0,0,0,0]
+            if abs(e_theta) < 0.01:
+                robot.moveTool(vel, block=False)
         
+        # ===========================================================
+
         if bAutomate == 5 or bAutomate == 10: # press l
             current_cmd = [0,0,0,0,0,0]
-            if e_theta > 0.01:
+            tolerance_theta = 0.01
+            if bAutomate >= 10:
+                tolerance_theta = 0.005
+            if e_theta > tolerance_theta:
                 current_cmd[5] = -offset
-            elif e_theta < -0.01:
+            elif e_theta < -tolerance_theta:
                 current_cmd[5] = offset
-            print('{}, {}'.format(target_cmd, current_cmd))
+            #current_cmd[2] = getZforMove(dz[0], 270)
+
+            local_ez = copy.deepcopy(ez)
+            if bAutomate >= 10:
+                local_ez = copy.deepcopy(ez2)
+            if local_ez > 1.0:
+                current_cmd[2] = -offset
+            elif local_ez < -1.0:
+                current_cmd[2] = offset
+
+            print('target_cmd={}, current_cmd={}'.format(target_cmd, current_cmd))
             #if target_cmd != current_cmd:
-            if not compare(np.sign(target_cmd), np.sign(current_cmd)):
-                v = 0.025
+            if (not compare(np.sign(target_cmd), np.sign(current_cmd))) or bFirst:
+                bFirst = False
+                v = 0.015
                 if current_cmd[5] != 0:
-                    v=0.006
+                    v=0.005
                 if bAutomate >= 10:
                     v = 0.005
                 #robot.stop()
@@ -149,56 +203,67 @@ def adjust():
                 if bAutomate == 5:
                     bAutomate = 6
                 else:
-                    bAutomate = 11
+                    bFirst = True
+                    bAutomate = 7
         elif bAutomate == 6 or bAutomate == 11:
             current_cmd = [0,0,0,0,0,0]
-            if ex > 5:
-                current_cmd[0] = offset
-            elif ex < -5:
-                current_cmd[0] = -offset
-            if ey > 5:
-                current_cmd[1] = offset
-            elif ey < -5:
-                current_cmd[1] = -offset
-            print('{}, {}'.format(target_cmd, current_cmd))
-            #if target_cmd != current_cmd:
-            if not compare(np.sign(target_cmd), np.sign(current_cmd)):
-                v = 0.025
-                if bAutomate >= 10 or ez > 0.0:
-                    v = 0.005
-                #robot.stop()
-                robot.moveTool(current_cmd, v, block=False)
+            tolerance = 5
+            local_kx = kx
+            local_ky = ky
+            if bAutomate >= 10:
+                tolerance = 1
+                local_kx = kx2
+                local_ky = ky2
+            if ey > tolerance:
+                current_cmd[1] = (abs(ey)*local_ky) #offset
+            elif ey < -tolerance:
+                current_cmd[1] = -(abs(ey)*local_ky)
+            if ex > tolerance:
+                current_cmd[0] = (abs(ex)*local_kx) #offset
+            elif ex < -tolerance:
+                current_cmd[0] = -(abs(ex)*local_kx)
+            current_cmd[2] = getZforMove(dz[0], 372.16259887312697)
+            if current_cmd[2] < 0.005 and current_cmd[2] > -0.005:
+                current_cmd[2] = 0.0
+
+            print('current_cmd=', current_cmd)
+            if sum(current_cmd) != 0.0:
+                robot.moveTool(current_cmd, v=0.25, block=True)
                 target_cmd = copy.deepcopy(current_cmd)
-            if target_cmd == [0,0,0,0,0,0]:
-                if bAutomate == 6:
-                    bAutomate = 7
-                else:
-                    bAutomate = 12
+            if bAutomate == 6:
+                bFirst = True
+                bAutomate = 10
+            else:
+                bAutomate = 0
         elif bAutomate == 7 or bAutomate == 12:
             current_cmd = [0,0,0,0,0,0]
-            if ez > 1.0:
-                current_cmd[2] = -offset
-            elif ez < -1.0:
-                current_cmd[2] = offset
-            print('{}, {}'.format(target_cmd, current_cmd))
-            #if target_cmd != current_cmd:
-            if not compare(np.sign(target_cmd), np.sign(current_cmd)):
-                v = 0.025
-                if bAutomate >= 10:
-                    v = 0.005
+            if ex > 1:
+                current_cmd[0] = offset
+            elif ex < -1:
+                current_cmd[0] = -offset
+            if ey > 1:
+                current_cmd[1] = offset
+            elif ey < -1:
+                current_cmd[1] = -offset
+
+            if target_cmd != current_cmd or bFirst:
+                bFirst = False
+                v = 0.01
+                if current_cmd[5] != 0:
+                    v=0.005
                 #robot.stop()
                 robot.moveTool(current_cmd, v, block=False)
                 target_cmd = copy.deepcopy(current_cmd)
             if target_cmd == [0,0,0,0,0,0]:
                 if bAutomate == 7:
-                    bAutomate = 8
+                    bAutomate = 20
                 else:
-                    bAutomate = 13
+                    bAutomate = 0
         elif bAutomate == 8 or bAutomate == 13:
             current_cmd = [0,0,0,0,0,0]
-            if ez > 7.0:
+            if ez2 > 7.0:
                 current_cmd[2] = -offset
-            elif ez < -1.0:
+            elif ez2 < -1.0:
                 current_cmd[2] = offset
             if ex > 1:
                 current_cmd[0] = offset
@@ -215,9 +280,9 @@ def adjust():
             #print('{}, {}'.format(target_cmd, current_cmd))
             if target_cmd != current_cmd or bFirst:
                 bFirst = False
-                v = 0.002
+                v = 0.01
                 if current_cmd[5] != 0:
-                    v=0.001
+                    v=0.005
                 #robot.stop()
                 robot.moveTool(current_cmd, v, block=False)
                 target_cmd = copy.deepcopy(current_cmd)
@@ -228,23 +293,15 @@ def adjust():
                     bAutomate = 0
         elif bAutomate == 20:
             print('moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0]')
-            robot.moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0], 0.07, block=True, exceptStop=True)
+            robot.moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0], 0.025, block=True, exceptStop=True)
             while True:
                 err = 0.0
                 for x in robot.ur_rtde.joint_velo:
                     err += abs(x)
-                print('err=', err)
                 if err < 0.001:
                     break
             print('moveTool([0,0,0.05,0,0,0]')
             robot.moveTool([0,0,0.05,0,0,0], 0.025, block=True, exceptStop=True)
-            while True:
-                err = 0.0
-                for x in robot.ur_rtde.joint_velo:
-                    err += abs(x)
-                print('err=', err)
-                if err < 0.001:
-                    break
             break
 
 
@@ -341,6 +398,10 @@ def compare(a, b):
             return False
     return True
 
+def myBlock(t, duration):
+    while time.time()-t < duration:
+        time.sleep(0.01)
+
 if __name__ == '__main__':
     print('car2station')
     robot.init()
@@ -367,18 +428,18 @@ if __name__ == '__main__':
     step = [2,1]
 
     print('step 1 grip open')
-    #robot.grip_open()
+    robot.grip_open()
     print('step 2 moveLine to home pose')
     robot.moveLine(pp[0], tip_speed)
     print('step 3 move to station A')
-    #sendJson(step[0], IP_WEBSERVER)    
+    target_station = step[0]
+    sendJson(target_station, IP_WEBSERVER)    
 
     print('step 6 detection thread start')
     threadDetect = threading.Thread(target=detect, args=(IP_CAMERA,))
     threadDetect.start()
-    #time.sleep(5.0)
+    time.sleep(5.0)
 
-    '''
     t = time.time()
     while (time.time()-t) < 30.0:
         msgs = getStatus(IP_WEBSERVER)
@@ -386,7 +447,6 @@ if __name__ == '__main__':
         if msgs.find('Waiting for new missions') != -1:
             break
         time.sleep(0.1)
-    '''
 
     print('step 4 moveJ to camera ready position')
     new_pose = copy.deepcopy(jj[0])
@@ -395,9 +455,12 @@ if __name__ == '__main__':
     
     print('step 5 moveTool y+0.1')
     #robot.moveTool([0,0.2,0,0,0,0], v=0.025, block=True)
+    offset_front = [0,0.2,0.05,0,0,0]
+    #if target_station == 2:
+    #    offset_front = [0,0.2,0.05,0,0,0]
     robot.moveTool([0,0.2,0.05,0,0,0], v=tip_speed, block=True)
     time.sleep(1.0)
-    exit()
+
     '''
     print('step 6 detection thread start')
     threadDetect = threading.Thread(target=detect, args=(IP_CAMERA,))
@@ -421,7 +484,8 @@ if __name__ == '__main__':
     robot.moveLine(pp[0], v=0.1, block=True)
     
     print('step 11 move to station B')
-    sendJson(step[1], IP_WEBSERVER)
+    target_station = step[1]
+    sendJson(target_station, IP_WEBSERVER)
     time.sleep(5.0)
     t = time.time()
     while (time.time()-t) < 30.0:
@@ -443,7 +507,10 @@ if __name__ == '__main__':
     robot.moveJ(j=new_pose, v=1.0)
     
     print('step 13 moveTool y+0.1')
-    robot.moveTool([0,0.1,0,0,0,0], v=tip_speed, block=True)
+    offset_front = [0,0.2,0.05,0,0,0]
+    #if target_station == 2:
+    #    offset_front = [0,0.1,0,0,0,0]
+    robot.moveTool(offset_front, v=tip_speed, block=True)
     #time.sleep(1.0)
 
     print('step 14 adjust start')
