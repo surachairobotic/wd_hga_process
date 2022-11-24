@@ -17,7 +17,7 @@ tip=[]
 Tool=[0,0,0,0,0,0]
 
 IP_WEBSERVER = '192.168.12.252:8000'
-IP_CAMERA = '192.168.12.251'
+IP_CAMERA = '192.168.12.195'
 
 frame_detect = None
 errTheta = 0.0
@@ -246,11 +246,10 @@ def adjust():
             elif ey < -1:
                 current_cmd[1] = -offset
 
-            if target_cmd != current_cmd or bFirst:
+            #if target_cmd != current_cmd or bFirst:
+            if (not compare(np.sign(target_cmd), np.sign(current_cmd))) or bFirst:
                 bFirst = False
-                v = 0.01
-                if current_cmd[5] != 0:
-                    v=0.005
+                v=0.005
                 #robot.stop()
                 robot.moveTool(current_cmd, v, block=False)
                 target_cmd = copy.deepcopy(current_cmd)
@@ -293,7 +292,7 @@ def adjust():
                     bAutomate = 0
         elif bAutomate == 20:
             print('moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0]')
-            robot.moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0], 0.025, block=True, exceptStop=True)
+            robot.moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0], 0.25, block=True, exceptStop=True)
             while True:
                 err = 0.0
                 for x in robot.ur_rtde.joint_velo:
@@ -301,7 +300,7 @@ def adjust():
                 if err < 0.001:
                     break
             print('moveTool([0,0,0.05,0,0,0]')
-            robot.moveTool([0,0,0.05,0,0,0], 0.025, block=True, exceptStop=True)
+            robot.moveTool([0,0,0.05,0,0,0], 0.1, block=True, exceptStop=True)
             break
 
 
@@ -425,10 +424,10 @@ if __name__ == '__main__':
 
 
     tip_speed = 0.25
-    step = [2,1]
+    step = [1,2]
 
     print('step 1 grip open')
-    robot.grip_open()
+    #robot.grip_open()
     print('step 2 moveLine to home pose')
     robot.moveLine(pp[0], tip_speed)
     print('step 3 move to station A')
@@ -478,10 +477,10 @@ if __name__ == '__main__':
     robot.moveTool([0,0,-0.2,0,0,0], v=0.1, block=True)
     #time.sleep(7.5)
     print('step 10 moveLine to home pose')
-    robot.moveLine(pp[0], tip_speed, block=True)
-    robot.moveLine(pp[1], v=0.1, block=True)
+    robot.moveLine(pp[0], v=tip_speed, block=True)
+    robot.moveLine(pp[1], v=tip_speed, block=True)
     robot.grip_open()
-    robot.moveLine(pp[0], v=0.1, block=True)
+    robot.moveLine(pp[0], v=tip_speed, block=True)
     
     print('step 11 move to station B')
     target_station = step[1]
@@ -496,9 +495,9 @@ if __name__ == '__main__':
         time.sleep(0.1)
     
     robot.moveLine(pp[0], tip_speed, block=True)
-    robot.moveLine(pp[1], v=0.1, block=True)
+    robot.moveLine(pp[1], v=tip_speed, block=True)
     robot.grip_close()
-    robot.moveLine(pp[0], v=0.1, block=True)
+    robot.moveLine(pp[0], v=tip_speed, block=True)
     
     
     print('step 12 moveJ to camera ready position')
@@ -518,7 +517,7 @@ if __name__ == '__main__':
     print('step 15 grip open')
     robot.grip_open()
     print('step 16 moveTool z-0.4')
-    robot.moveTool([0,0,-0.2,0,0,0], v=0.1, block=True)
+    robot.moveTool([0,0,-0.2,0,0,0], v=tip_speed, block=True)
     #time.sleep(5.0)
     print('step 17 moveLine to home pose')
     robot.moveLine(pp[0], tip_speed)

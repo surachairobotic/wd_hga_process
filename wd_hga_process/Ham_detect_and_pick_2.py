@@ -125,8 +125,8 @@ def ham_detect_and_adjust(ur):
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)    
     print(cnt)
     cnt+=1
-    host_ip = '192.168.12.195' # paste your server ip address here
-    port = 6789
+    host_ip = '192.168.12.193' # paste your server ip address here
+    port = 1234
     print(cnt)
     cnt+=1
     client_socket.connect((host_ip,port)) # a tuple
