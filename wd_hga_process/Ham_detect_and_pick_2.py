@@ -126,7 +126,7 @@ def ham_detect_and_adjust(ur):
     print(cnt)
     cnt+=1
     host_ip = '192.168.12.193' # paste your server ip address here
-    port = 1234
+    port = 5678
     print(cnt)
     cnt+=1
     client_socket.connect((host_ip,port)) # a tuple
@@ -175,7 +175,7 @@ def ham_detect_and_adjust(ur):
             print("actual pos : {}".format(robot.ur_rtde.tip_pos))
             print("Action move : {}".format(tip))
             #robot.moveLine(tip, v=0.01, block=True)
-            robot.moveTool(Tool)
+            robot.moveTool(Toolv=0.01)
             print("TOOL : {}".format(Tool))
             Tool=[0,0,0,0,0,0]
             cv2.imshow("Detection", frame_detect)

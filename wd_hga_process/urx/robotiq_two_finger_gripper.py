@@ -141,9 +141,9 @@ class Robotiq_Two_Finger_Gripper(object):
 
     def __init__(self,
                  robot,
-                 payload=0.85,
-                 speed=255,
-                 force=50,
+                 payload=1.260,
+                 speed=25,
+                 force=25,
                  socket_host=SOCKET_HOST,
                  socket_port=SOCKET_PORT,
                  socket_name=SOCKET_NAME):

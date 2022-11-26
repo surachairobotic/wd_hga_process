@@ -12,7 +12,7 @@ import pandas as pd
 SOCKET_HOST = "127.0.0.1"
 SOCKET_PORT = 63352
 SOCKET_NAME = "gripper_socket"
-tip_speed = 0.1
+tip_speed = 0.25
 high_offset=0.421
 adj_hight=0
 enable_grip = True
@@ -34,9 +34,6 @@ state=0
 
 def open_camera():
     global frame_detect, iThreadRun, tResetDetector, pos, tip ,Tool,adj_hight
-    
-    cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
-
     cnt=0
     print('open_camera')
     # create socket
@@ -44,7 +41,7 @@ def open_camera():
     print(cnt)
     cnt+=1
     host_ip = '192.168.12.193' # paste your server ip address here
-    port = 1234
+    port = 5678
     print(cnt)
     cnt+=1
     client_socket.connect((host_ip,port)) # a tuple
@@ -70,7 +67,7 @@ def open_camera():
         
         #####################################################################
     cv2.imwrite('/home/cmit/dev_ws/ham_image/rgb_0.png',frame)
-    cv2.destroyAllWindows()
+    
     client_socket.close()
     
 def detect_pick():
@@ -104,6 +101,8 @@ def detect_pick():
             print("x1 y1 x2 y2 :{} {} {} {}".format(x1,y1,x2,y2))
             print("center_x: {}".format(center_x))
             print("center_y: {}".format(center_y))
+            cv2.imwrite('/home/cmit/dev_ws/ham_image/detect_0.png',frame)
+            #cv2.imshow("RECEIVING VIDEO", frame)
         ###########################
             area_detect=(x2-x1)*(y2-y1)
             area_ideal=(ideal_end_point[0]-ideal_start_point[0])*(ideal_end_point[1]-ideal_start_point[1])
@@ -122,30 +121,40 @@ def detect_pick():
                     print('move right')
                     new_pos=(x2-ideal_end_point[0])*x_axis_offset
                     Tool[0]-=new_pos
+                    robot.moveTool(Tool,block=False)
+                    print("move Tool : "+str(Tool))
+                    Tool=[0,0,0,0,0,0]
                 if x2<ideal_end_point[0]:
                     print('move left')      
                     new_pos=(ideal_end_point[0]-x2)*x_axis_offset
                     Tool[0]+=new_pos
-                    robot.moveTool(Tool)
-                    print("move")
+                    robot.moveTool(Tool,block=False)
+                    print("move Tool : "+str(Tool))
+                    Tool=[0,0,0,0,0,0]
             if abs(y1-ideal_start_point[1])>3:
                 if y1>ideal_start_point[1]:
                     print('move up')
                     new_pos=(y1-ideal_start_point[1])*y_axix_offset
                     Tool[1]-=new_pos   
+                    robot.moveTool(Tool,block=False)
+                    print("move Tool : "+str(Tool))
+                    Tool=[0,0,0,0,0,0]
                 if y1<ideal_start_point[1]:
                     print('move down')
                     new_pos=(ideal_start_point[1]-y1)*y_axix_offset
                     Tool[1]+=new_pos
+                    robot.moveTool(Tool,block=False)
+                    print("move Tool : "+str(Tool))
+                    Tool=[0,0,0,0,0,0]
             if abs(y1-ideal_start_point[1]) <3 and abs(x2-ideal_end_point[0]) <3 :
                 state=1
                 print("break while loop")
-                break
+                cv2.destroyAllWindows()
             else:
                 state=0
-        robot.moveTool(Tool)
-        print("move")
-        Tool=[0,0,0,0,0,0]
+        #robot.moveTool(Tool,block=False)
+       #print("move Tool : "+str(Tool))
+        #Tool=[0,0,0,0,0,0]
 
         print("state :" + str(state))
         if abs(y1-ideal_start_point[1]) <3 and abs(x2-ideal_end_point[0]) <3 :
@@ -194,7 +203,7 @@ def detect_place():
     state=0
     while(state ==0):
         open_camera()
-        frame_detect = cv2.resize(frame_detect,(848,480))
+        frame_detect =cv2.imread('/home/cmit/dev_ws/ham_image/rgb_0.png')
         out2=model2(frame_detect)
         if len(out2.xyxy[0]) != 0:
             bbox= out2.xyxy[0]
@@ -219,42 +228,58 @@ def detect_place():
             print("x1 y1 x2 y2 :{} {} {} {}".format(x1,y1,x2,y2))
             print("center_x: {}".format(center_x))
             print("center_y: {}".format(center_y))
+            cv2.imwrite('/home/cmit/dev_ws/ham_image/detect_1.png',frame)
         ###########################
             area_detect=(x2-x1)*(y2-y1)
             area_ideal=(ideal_end_point[0]-ideal_start_point[0])*(ideal_end_point[1]-ideal_start_point[1])
-            while(state ==0):
-                if (abs(area_ideal-area_detect)/area_ideal)*100 >5 :
-                    if area_detect>area_ideal:
-                        print("too close")
-                        #Tool[2]-=0.001
-                    if area_detect<area_ideal:
-                        print("too far")
-                        #Tool[2]+=0.001
-                if (abs(area_ideal-area_detect)/area_ideal)*100 <5 :
-                    print("z Axis :OK")
-             ####################################### Z axis 
-                if abs(x2-ideal_end_point[0])>3:
-                    if x2>ideal_end_point[0]:
-                        print('move right')
-                        new_pos=(x2-ideal_end_point[0])*x_axis_offset
-                        Tool[0]-=new_pos
-                    if x2<ideal_end_point[0]:
-                        print('move left')      
-                        new_pos=(ideal_end_point[0]-x2)*x_axis_offset
-                        Tool[0]+=new_pos
-                if abs(y1-ideal_start_point[1])>3:
-                    if y1>ideal_start_point[1]:
-                        print('move up')
-                        new_pos=(y1-ideal_start_point[1])*y_axix_offset
-                        Tool[1]-=new_pos   
-                    if y1<ideal_start_point[1]:
-                        print('move down')
-                        new_pos=(ideal_start_point[1]-y1)*y_axix_offset
-                        Tool[1]+=new_pos
-                robot.moveTool(Tool)
-                Tool=[0,0,0,0,0,0]
-                if abs(y1-ideal_start_point[1]) <3 and abs(x2-ideal_end_point[0]) <3 :
-                    state=1
+
+            if (abs(area_ideal-area_detect)/area_ideal)*100 >5 :
+                if area_detect>area_ideal:
+                    print("too close")
+                    #Tool[2]-=0.001
+                if area_detect<area_ideal:
+                    print("too far")
+                    #Tool[2]+=0.001
+            if (abs(area_ideal-area_detect)/area_ideal)*100 <5 :
+                print("z Axis :OK")
+         ####################################### Z axis 
+            if abs(x2-ideal_end_point[0])>3:
+                if x2>ideal_end_point[0]:
+                    print('move right')
+                    new_pos=(x2-ideal_end_point[0])*x_axis_offset
+                    Tool[0]-=new_pos
+                    robot.moveTool(Tool,block=False)
+                    print("move Tool : "+str(Tool))
+                    Tool=[0,0,0,0,0,0]
+                if x2<ideal_end_point[0]:
+                    print('move left')      
+                    new_pos=(ideal_end_point[0]-x2)*x_axis_offset
+                    Tool[0]+=new_pos
+                    robot.moveTool(Tool,block=False)
+                    print("move Tool : "+str(Tool))
+                    Tool=[0,0,0,0,0,0]
+            if abs(y1-ideal_start_point[1])>3:
+                if y1>ideal_start_point[1]:
+                    print('move up')
+                    new_pos=(y1-ideal_start_point[1])*y_axix_offset
+                    Tool[1]-=new_pos
+                    robot.moveTool(Tool,block=False)
+                    print("move Tool : "+str(Tool))
+                    Tool=[0,0,0,0,0,0]   
+                if y1<ideal_start_point[1]:
+                    print('move down')
+                    new_pos=(ideal_start_point[1]-y1)*y_axix_offset
+                    Tool[1]+=new_pos
+                    robot.moveTool(Tool,block=False)
+                    print("move Tool : "+str(Tool))
+                    Tool=[0,0,0,0,0,0]
+            if abs(y1-ideal_start_point[1]) <3 and abs(x2-ideal_end_point[0]) <3 :
+                state=1
+                print("break while loop")
+                cv2.destroyAllWindows()
+            else:
+                state=0
+        print("state :" + str(state))
         if abs(y1-ideal_start_point[1]) <3 and abs(x2-ideal_end_point[0]) <3 :
             ham_pp = [  [-0.01017494401209725, -0.3756525442585086, 0.13840573695699745,-3.1241048704483654, 0.011357524148814309, -0.0011440264047513579],#5
             [-0.011850422601318423, -0.37585862537959563, 0.317095305821409,-3.1308455555118337,-0.017135301633691005,-0.0007322231555360971],#6
@@ -267,6 +292,8 @@ def detect_place():
             ham_pp2=[ [-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]]
             pos_tip=copy.deepcopy(robot.ur_rtde.tip_pos)
             pos_pos=copy.deepcopy(robot.ur_rtde.joint_pos)
+            if enable_grip:
+                robot.grip_open()
             print("pick tray on agv")
             print('step put arm to jig 1') # put arm to jig
             robot.moveLine(ham_pp2[0], tip_speed)
@@ -302,7 +329,7 @@ if __name__ == '__main__':
     
     pp = [[0.6814899895774164, -0.0405411724510514, 0.3259812667947507,2.1991536910693466,2.2431889339135105,9.717629458548752e-05]] # [x,y,z,r,p,y]
     robot.moveLine(pp[0], debug=False)
-    detect_pick()
+    #detect_pick()
     #t = time.time()
     #while (time.time()-t) < 30.0:
     #    msgs = getStatus(IP_WEBSERVER)
@@ -312,6 +339,6 @@ if __name__ == '__main__':
     #    time.sleep(0.1)
     #pp = [[0.6814899895774164, -0.0405411724510514, 0.3259812667947507,2.1991536910693466,2.2431889339135105,9.717629458548752e-05]] # [x,y,z,r,p,y]
     #robot.moveLine(pp[0], debug=False)
-    #detect_place()
+    detect_place()
     
     del robot
