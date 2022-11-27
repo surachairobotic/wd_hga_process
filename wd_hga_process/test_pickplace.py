@@ -266,7 +266,7 @@ def draw2(frame, contours, color, ref):
         cv2.drawContours(image=frame_detect, contours=contours, contourIdx=i, color=color, thickness=2, lineType=cv2.LINE_AA)
     return frame
 
-def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
+def detect_and_adjust(host_ip = '192.168.12.251', port = 1234):
     global frame_detect, iThreadRun, h, s, v, robot, bAutomate, oldTarget, debug_hsv, center_point, imageTheta, target_cmd, dz
 
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
@@ -289,17 +289,18 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
     ky2=0.0006951284260666848
 
     bFirst = True
-    bAutomate = 5
+    bAutomate = 0
 
     tip_speed = 0.25
     #robot.grip_open()
     pp = [-0.007583460058656687, -0.37736000459046504, 0.3247866033575867, -3.14142698997794, 0.009354814800434154, -0.00021372635081474143]
     jj = [1.1900781393051147, -1.8786550960936488, 1.6523898283587855, -1.3427302998355408, -1.5630763212787073, 2.764693260192871]
-    robot.moveLine(pp, tip_speed)
-    new_pose = copy.deepcopy(jj)
-    new_pose[0] = new_pose[0]+(math.pi/2.0)
-    robot.moveJ(j=new_pose, v=math.pi/2.0)    
-    robot.moveTool([0,0.2,0.05,0,0,0], v=tip_speed, block=True)
+    if bAutomate == 5:
+        robot.moveLine(pp, tip_speed)
+        new_pose = copy.deepcopy(jj)
+        new_pose[0] = new_pose[0]+(math.pi/2.0)
+        robot.moveJ(j=new_pose, v=math.pi/2.0)    
+        robot.moveTool([0,0.2,0.05,0,0,0], v=tip_speed, block=True)
 
     while True:
         t = time.time()
@@ -363,15 +364,12 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
         
         height, width, _ = frame_detect.shape
         ez2 = dz[0]-372.16259887312697
-        ez = dz[0]-270
-        target_theta = 3.112031375024515
-        target_cx = width/2
-        target_cy = height/2
-
-        if bAutomate >= 10:
-            target_cx = 464
-            target_cy = 363
-        
+        ez = dz[0]-251.1075473176868
+        target_theta = 3.112384304723928
+        target_cx = 449
+        target_cy = 231
+        #target_cx = width/2
+        #target_cy = height/2        
 
         '''
         robot.tip=[0.523255723993786, -0.10090175027911867, 0.33169211497291273], xy=(433, 132), dz=(242.10121850168372, -242, 7)
@@ -384,7 +382,7 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
         
         e, ex, ey = dist((target_cx, target_cy), center_point)
         e_theta = imageTheta-target_theta
-        print("[{}], ez={}, ez2={}, robot.z={}, dz={}".format(bAutomate, ez, ez2, robot.ur_rtde.tip_pos[2], dz[0]))
+        print("[{}], dz={}, theta={}, xy={}".format(bAutomate, dz[0], imageTheta, center_point))
         #print("{},{}".format(robot.ur_rtde.tip_pos[2], dz[0]))
         if bAutomate == 1: # press k
             current_cmd = [0,0,0,0,0,0]
@@ -424,8 +422,6 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
             #current_cmd[2] = getZforMove(dz[0], 270)
 
             local_ez = copy.deepcopy(ez)
-            if bAutomate >= 10:
-                local_ez = copy.deepcopy(ez2)
             if local_ez > 1.0:
                 current_cmd[2] = -offset
             elif local_ez < -1.0:
@@ -436,8 +432,6 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
             if (not compare(np.sign(target_cmd), np.sign(current_cmd))) or bFirst:
                 bFirst = False
                 v = 0.015
-                if current_cmd[5] != 0:
-                    v=0.005
                 if bAutomate >= 10:
                     v = 0.005
                 #robot.stop()
@@ -445,10 +439,10 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
                 target_cmd = copy.deepcopy(current_cmd)
             if target_cmd == [0,0,0,0,0,0]:
                 if bAutomate == 5:
-                    bAutomate = 6
+                    bAutomate = 7
                 else:
                     bFirst = True
-                    bAutomate = 7
+                    bAutomate = 12
         elif bAutomate == 6 or bAutomate == 11:
             current_cmd = [0,0,0,0,0,0]
             tolerance = 5
@@ -493,14 +487,17 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
             #if target_cmd != current_cmd or bFirst:
             if (not compare(np.sign(target_cmd), np.sign(current_cmd))) or bFirst:
                 bFirst = False
-                v = 0.001
+                v = 0.01
+                if bAutomate >= 10:
+                    v = 0.005
                 robot.moveTool(current_cmd, v, block=False)
                 target_cmd = copy.deepcopy(current_cmd)
             if target_cmd == [0,0,0,0,0,0]:
                 if bAutomate == 7:
-                    bAutomate = 20
+                    bFirst = True
+                    bAutomate = 10
                 else:
-                    bAutomate = 0
+                    bAutomate = 20
         elif bAutomate == 8 or bAutomate == 13:
             current_cmd = [0,0,0,0,0,0]
             if ez2 > 7.0:
@@ -535,7 +532,7 @@ def detect_and_adjust(host_ip = '192.168.12.195', port = 1234):
                     bAutomate = 0
         elif bAutomate == 20:
             print('moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0]')
-            robot.moveTool([0.02686939900984832, 0.08657685150415684,0.15,0,0,0], 0.25, block=True, exceptStop=True)
+            robot.moveTool([0, 0.1,0.35,0,0,0], 0.25, block=True, exceptStop=True)
             while True:
                 err = 0.0
                 for x in robot.ur_rtde.joint_velo:

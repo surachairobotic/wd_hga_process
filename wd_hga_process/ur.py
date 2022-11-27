@@ -35,7 +35,7 @@ class UR():
             self.ur.close()
 
     def timer_callback(self):
-        print('timer_callback')
+        print('timer_callbacksss')
         trans = self.ur.get_pose()
         if (self.i%2) == 0:
             self.grip.open_gripper()

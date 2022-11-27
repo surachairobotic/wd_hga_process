@@ -3,25 +3,23 @@ from ur_rtde import *
 from ur5_kinematics import *
 
 class GRIPPER():
-    def __init__(self, _ip='192.168.12.20'):
+    def __init__(self, _ip='192.168.12.100'):
         # Gripper init
         self.ip = _ip
-        self.host = 'http://' + self.ip + '/api/v2.0.0/'
-        # Format Headers
-        self.headers = {}
-        self.headers['Content-Type'] = 'application/json'
-        self.headers['Authorization'] = 'Basic YWRtaW46OGM2OTc2ZTViNTQxMDQxNWJkZTkwOGJkNGRlZTE1ZGZiMTY3YTljODczZmM0YmI4YTgxZjZmMmFiNDQ4YTkxOA=='
-
-        self.pos = ['e0f8f53c-02bd-11ed-90f4-0001299a3e90', # grip open
-                    'd3ab6322-02bd-11ed-90f4-0001299a3e90', # grip close
-                   ]
-
+        self.port = 63352 #PORT used by robotiq gripper
+        
     def open(self):
-        self.mission_id = {"mission_id": self.pos[0]}
-        post_mission = requests.post(self.host + 'mission_queue', json=self.mission_id, headers=self.headers)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            #open the socket
+            s.connect((self.ip, self.port))
+            s.sendall(b'SET POS 0\n')
+            data = s.recv(2**10)
     def close(self):
-        self.mission_id = {"mission_id": self.pos[1]}
-        post_mission = requests.post(self.host + 'mission_queue', json=self.mission_id, headers=self.headers)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            #open the socket
+            s.connect((self.ip, self.port))
+            s.sendall(b'SET POS 81\n')
+            data = s.recv(2**10)
 
 class UR_SOCKET():
     def __init__(self, _ur_ip='192.168.12.100', _ur_port=30002, disableButton=True):
@@ -133,10 +131,10 @@ class UR_SOCKET():
     
     def grip_open(self):
         self.grip.open()
-        time.sleep(6.0)
+        time.sleep(0.65)
     def grip_close(self):
         self.grip.close()
-        time.sleep(6.0)
+        time.sleep(0.65)
 
     def calError(self, actual, target):
         #print('actual=', actual, ', target=', target)
