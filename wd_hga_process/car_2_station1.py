@@ -17,7 +17,7 @@ tip=[]
 Tool=[0,0,0,0,0,0]
 
 IP_WEBSERVER = '192.168.12.252:8000'
-IP_CAMERA = '192.168.12.251'
+IP_CAMERA = '192.168.12.250'
 
 frame_detect = None
 errTheta = 0.0
@@ -56,7 +56,7 @@ def getStatus(ip_port):
     res = str(parsed['message'])
     return res
 
-def detect(host_ip, port = 1234):
+def detect(host_ip, port = 5678):
     global frame_detect, iThreadRun, h, s, v, robot, bAutomate, oldTarget, debug_hsv, center_point, imageTheta, target_theta, target_cmd, dz
 
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
@@ -330,12 +330,15 @@ if __name__ == '__main__':
     '''
 
     jj = [  [1.1900781393051147, -1.8786550960936488, 1.6523898283587855, -1.3427302998355408, -1.5630763212787073, 2.764693260192871],
-            [1.188525915145874, -1.8645268879332484, 2.1453784147845667, -1.8499347172179164, -1.5629962126361292, 2.7674479484558105]
+            [1.188525915145874, -1.8645268879332484, 2.1453784147845667, -1.8499347172179164, -1.5629962126361292, 2.7674479484558105],
+            [2.9205119609832764, -1.3050449353507538, 1.1448033491717737, -1.4221486163190384, -1.5619500319110315, 2.8909459114074707],
+            [2.8079707622528076, -1.2574858230403443, 1.0594685713397425, -1.3843616408160706, -1.5608137289630335, 2.813756227493286]
          ] # radian
     pp = [  [-0.007583460058656687, -0.37736000459046504, 0.3247866033575867, -3.14142698997794, 0.009354814800434154, -0.00021372635081474143],
-            [-0.007576178412409958, -0.3773818028145571, 0.12986619843536518, -3.1414985027277504, 0.009336444075501774, -0.00018903153494215214]
+            [-0.007576178412409958, -0.3773818028145571, 0.12986619843536518, -3.1414985027277504, 0.009336444075501774, -0.00018903153494215214],
+            [0.6174829548893407, -0.002208857889664848, 0.3057541282246625, 2.183075466060256, 2.2440344662481317, 0.01187872549798769],
+            [0.6292869741668308, -0.0767213131881684, 0.31456657122822373, 2.2226804232558193, 2.204603944436806, 0.011861757412845914]
          ] # [x,y,z,r,p,y]
-
 
     tip_speed = 0.25
     step = [1,2]
@@ -362,17 +365,10 @@ if __name__ == '__main__':
         time.sleep(0.1)
 
     print('step 4 moveJ to camera ready position')
-    new_pose = copy.deepcopy(jj[0])
-    new_pose[0] = new_pose[0]+(math.pi/2.0)
-    robot.moveJ(j=new_pose, v=math.pi/2.0)
-    
-    print('step 5 moveTool y+0.1')
-    #robot.moveTool([0,0.2,0,0,0,0], v=0.025, block=True)
-    offset_front = [0,0.2,0.05,0,0,0]
-    #if target_station == 2:
-    #    offset_front = [0,0.2,0.05,0,0,0]
-    robot.moveTool([0,0.2,0.05,0,0,0], v=tip_speed, block=True)
-    time.sleep(1.0)
+    target_indx = 2
+    if target_station == 2:
+        target_indx = 3
+    robot.moveJ(j=jj[target_indx], v=math.pi/2.0)    
 
     '''
     print('step 6 detection thread start')
@@ -415,17 +411,11 @@ if __name__ == '__main__':
     
     
     print('step 12 moveJ to camera ready position')
-    new_pose = copy.deepcopy(jj[0])
-    new_pose[0] = new_pose[0]+(math.pi/2.0)
-    robot.moveJ(j=new_pose, v=1.0)
+    target_indx = 2
+    if target_station == 2:
+        target_indx = 3
+    robot.moveJ(j=jj[target_indx], v=math.pi/2.0)
     
-    print('step 13 moveTool y+0.1')
-    offset_front = [0,0.2,0.05,0,0,0]
-    #if target_station == 2:
-    #    offset_front = [0,0.1,0,0,0,0]
-    robot.moveTool(offset_front, v=tip_speed, block=True)
-    #time.sleep(1.0)
-
     print('step 14 adjust start')
     adjust()
     print('step 15 grip open')

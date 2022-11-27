@@ -178,6 +178,27 @@ def adjust_before_detect():
     return True
 
 
+def detect_red():
+    state=0
+    while(state ==0):
+        open_camera()
+        frame_detect =cv2.imread('/home/cmit/dev_ws/ham_image/rgb_0.png')
+        #frame_detect = cv2.resize(frame_detect,(848,480))
+        out2=model_red(frame_detect)
+        print(out2.xyxy)
+        for i in len(out2.xyxy):
+            bbox= out2.xyxy[i]
+            x1=int((bbox.data[i][0]).item())
+            y1=int((bbox.data[i][1]).item())
+            x2=int((bbox.data[i][2]).item())
+            y2=int((bbox.data[i][3]).item())
+            start_point = (x1, y1)
+            end_point = (x2, y2)
+            frame = cv2.rectangle(frame_detect, start_point, end_point, color, thickness)
+            cv2.imwrite('/home/cmit/dev_ws/ham_image/red_detect.png',frame)
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
+            break
 def detect_pick():
     global frame_detect, iThreadRun, tResetDetector,pos,tip,Tool,enable_grip
     high_offset=0.421
@@ -309,148 +330,12 @@ def detect_pick():
                 robot.moveLine(pp[1], tip_speed)
                 print("********************************finish_Pick********************************")
 
-def detect_place():
-    global frame_detect, iThreadRun, tResetDetector, pos, tip ,Tool,adj_hight,enable_grip
-    high_offset=0.415
-    state=0
-    while(state ==0):
-        open_camera()
-        frame_detect =cv2.imread('/home/cmit/dev_ws/ham_image/rgb_0.png')
-        out2=model2(frame_detect)
-        if len(out2.xyxy[0]) != 0:
-            bbox= out2.xyxy[0]
-            x1=int((bbox.data[0][0]).item())
-            y1=int((bbox.data[0][1]).item())
-            x2=int((bbox.data[0][2]).item())
-            y2=int((bbox.data[0][3]).item())
-            center_x=x1+(x2-x1)/2
-            center_y=y1+(y2-y1)/2
-            start_point = (x1, y1)
-            end_point = (x2, y2)
-            color = (255, 255, 0)
-            thickness = 1
-            ideal_start_point =(317,199) ##########x1 y1 x2 y2 :301 124 565 350 center of pic
-
-            ideal_end_point =(589,432)############ x1 y1 x2 y2 :317 207 589 453   x1 y1 x2 y2 :317 204 592 455 x1 y1 x2 y2 :316 199 589 450
-
-
-            color_ideal=(0,0,255)
-            frame = cv2.rectangle(frame_detect, ideal_start_point,  ideal_end_point, color_ideal, 1)
-            frame = cv2.rectangle(frame_detect, start_point, end_point, color, thickness)
-            print("x1 y1 x2 y2 :{} {} {} {}".format(x1,y1,x2,y2))
-            print("center_x: {}".format(center_x))
-            print("center_y: {}".format(center_y))
-            cv2.imwrite('/home/cmit/dev_ws/ham_image/detect_1.png',frame)
-        ###########################
-            area_detect=(x2-x1)*(y2-y1)
-            area_ideal=(ideal_end_point[0]-ideal_start_point[0])*(ideal_end_point[1]-ideal_start_point[1])
-
-            if (abs(area_ideal-area_detect)/area_ideal)*100 >5 :
-                if area_detect>area_ideal:
-                    print("too close")
-                    #Tool[2]-=0.001
-                if area_detect<area_ideal:
-                    print("too far")
-                    #Tool[2]+=0.001
-            if (abs(area_ideal-area_detect)/area_ideal)*100 <5 :
-                print("z Axis :OK")
-         ####################################### Z axis 
-            if abs(x2-ideal_end_point[0])>3:
-                if x2>ideal_end_point[0]:
-                    print('move right')
-                    new_pos=(x2-ideal_end_point[0])*x_axis_offset
-                    Tool[0]-=new_pos
-                    robot.moveTool(Tool,block=False)
-                    print("move Tool : "+str(Tool))
-                    Tool=[0,0,0,0,0,0]
-                if x2<ideal_end_point[0]:
-                    print('move left')      
-                    new_pos=(ideal_end_point[0]-x2)*x_axis_offset
-                    Tool[0]+=new_pos
-                    robot.moveTool(Tool,block=False)
-                    print("move Tool : "+str(Tool))
-                    Tool=[0,0,0,0,0,0]
-            if abs(y1-ideal_start_point[1])>3:
-                if y1>ideal_start_point[1]:
-                    print('move up')
-                    new_pos=(y1-ideal_start_point[1])*y_axix_offset
-                    Tool[1]-=new_pos
-                    robot.moveTool(Tool,block=False)
-                    print("move Tool : "+str(Tool))
-                    Tool=[0,0,0,0,0,0]   
-                if y1<ideal_start_point[1]:
-                    print('move down')
-                    new_pos=(ideal_start_point[1]-y1)*y_axix_offset
-                    Tool[1]+=new_pos
-                    robot.moveTool(Tool,block=False)
-                    print("move Tool : "+str(Tool))
-                    Tool=[0,0,0,0,0,0]
-            if abs(y1-ideal_start_point[1]) <=3 and abs(x2-ideal_end_point[0]) <=3 :
-                state=1
-                print("break while loop")
-                cv2.destroyAllWindows()
-            else:
-                state=0
-        print("state :" + str(state))
-        if abs(y1-ideal_start_point[1]) <=3 and abs(x2-ideal_end_point[0]) <=3 :
-            ham_pp = [  [-0.01017494401209725, -0.3756525442585086, 0.13840573695699745,-3.1241048704483654, 0.011357524148814309, -0.0011440264047513579],#5
-            [-0.011850422601318423, -0.37585862537959563, 0.317095305821409,-3.1308455555118337,-0.017135301633691005,-0.0007322231555360971],#6
-            [-0.011868193208126201, -0.3758594707806762, 0.32461148496658865,-3.130902314470439,-0.017127665212704805, -0.0006788930909500954],#7
-            [0.6157319922335678, -0.0033028450931117614, 0.06900699254837098,-2.1666266010453423, -2.274861107011292, -4.6540396680441666e-05],#8
-            [0.6157760979216934, -0.003319206398711913, -0.09569432134831601,2.1666037432212284, 2.2748633605956563, 6.43388420211832e-05],#9
-            [0.615705930495875, -0.0034379305093566524, 0.32595563912016234,-2.166769598094382, -2.274694779560951, 0.0002946796220985595]#10
-         ]
-            agv=[[-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]]
-            ham_pp2=[ [-0.010139404930124567, -0.375639022864649, 0.2959769126174789,-3.124005796356226, 0.011138367088803001, -0.0013212295123491617]]
-            pos_tip=copy.deepcopy(robot.ur_rtde.tip_pos)
-            pos_pos=copy.deepcopy(robot.ur_rtde.joint_pos)
-            if enable_grip:
-                robot.grip_open()
-            print("pick tray on agv")
-            print('step put arm to jig 1') # put arm to jig
-            robot.moveLine(ham_pp2[0], tip_speed)
-            
-            print('step put arm to jig 2') # put arm to jig
-            robot.moveLine(ham_pp[0], tip_speed)
-    
-            print('step grab tray') #grab tray
-            if enable_grip:
-                robot.grip_close()
-            print('step lift arm up')
-            robot.moveLine(ham_pp[1], tip_speed)  
-            print("move arm to save pos")
-            robot.moveJ(pos_pos, v=math.pi/2.0)  
-            print("put tray to jig")
-            pos_tip[2] = pos_tip[2]-high_offset
-            robot.moveLine(pos_tip, tip_speed)  
-            if enable_grip:
-                robot.grip_open()    
-            print('lift arm up')
-            pos_tip[2] = pos_tip[2]+high_offset
-            robot.moveLine(pos_tip, tip_speed)  
-            print('move arm to agv') 
-            robot.moveLine(agv[0], tip_speed)
-            print("-------------------------------finish place----------------------------------")
-    
-
-
-
-
 
 if __name__ == '__main__':
     robot.init()
     pp = [[0.6814899895774164, -0.0405411724510514, 0.3259812667947507,2.1991536910693466,2.2431889339135105,9.717629458548752e-05]] # [x,y,z,r,p,y]
     robot.moveLine(pp[0], debug=False)
-    detect_pick()
-    #t = time.time()
-    #while (time.time()-t) < 30.0:
-    #    msgs = getStatus(IP_WEBSERVER)
-    #    print(msgs)
-    #    if msgs.find('Waiting for new missions') != -1:
-    #        break
-    #    time.sleep(0.1)
-    #pp = [[0.6814899895774164, -0.0405411724510514, 0.3259812667947507,2.1991536910693466,2.2431889339135105,9.717629458548752e-05]] # [x,y,z,r,p,y]
-    #robot.moveLine(pp[0], debug=False)
-    #detect_place()
+    #detect_pick()
+    detect_red()
     
     del robot

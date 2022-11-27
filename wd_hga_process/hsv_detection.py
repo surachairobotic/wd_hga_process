@@ -26,6 +26,8 @@ class HSVDetection():
         mask = cv2.dilate(mask, np.ones((3, 3), dtype=np.uint8))
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         #print(type(contours))
+        #print(len(contours))
+        #print(contours)
         lContour = []
         maxArea = 0
         for i in range(len(contours)):
@@ -40,6 +42,7 @@ class HSVDetection():
                     lContour[0] = contours[i]
                 elif area > cv2.contourArea(lContour[1]):
                     lContour[1] = contours[i]
+        #print(lContour)
         try:
             x0,y0,_,_ = cv2.boundingRect(lContour[0])
             x1,y1,_,_ = cv2.boundingRect(lContour[1])

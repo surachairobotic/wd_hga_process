@@ -266,7 +266,7 @@ def draw2(frame, contours, color, ref):
         cv2.drawContours(image=frame_detect, contours=contours, contourIdx=i, color=color, thickness=2, lineType=cv2.LINE_AA)
     return frame
 
-def detect_and_adjust(host_ip = '192.168.12.251', port = 1234):
+def detect_and_adjust(host_ip = '192.168.12.250', port = 5678):
     global frame_detect, iThreadRun, h, s, v, robot, bAutomate, oldTarget, debug_hsv, center_point, imageTheta, target_cmd, dz
 
     cv2.namedWindow("Detection", cv2.WINDOW_AUTOSIZE);
@@ -498,6 +498,7 @@ def detect_and_adjust(host_ip = '192.168.12.251', port = 1234):
                     bAutomate = 10
                 else:
                     bAutomate = 20
+                    bAutomate = 0
         elif bAutomate == 8 or bAutomate == 13:
             current_cmd = [0,0,0,0,0,0]
             if ez2 > 7.0:
