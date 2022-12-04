@@ -22,9 +22,10 @@ colcon build --symlink-install --packages-select imu_tools
 
 === terminal ===
 . install/local_setup.sh
-python3 -m uvicorn wd_webserver:app --reload --host 0.0.0.0
+*python3 -m uvicorn wd_webserver:app --reload --host 0.0.0.0
+*ros2 run wd_hga_process wd_mir
+
 python3 ~/dev_ws/src/wd_hga_process/wd_hga_process/btncall_gui.py
-ros2 run wd_hga_process wd_mir
 ros2 topic echo /mir/robot_state
 ros2 topic echo /mir/btn_call
 ros2 topic pub /mir/btn_call std_msgs/String "data: 5"

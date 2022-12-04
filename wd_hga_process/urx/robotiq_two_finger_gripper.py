@@ -141,9 +141,9 @@ class Robotiq_Two_Finger_Gripper(object):
 
     def __init__(self,
                  robot,
-                 payload=0.85,
-                 speed=255,
-                 force=50,
+                 payload=1.260,
+                 speed=25,
+                 force=25,
                  socket_host=SOCKET_HOST,
                  socket_port=SOCKET_PORT,
                  socket_name=SOCKET_NAME):
@@ -166,6 +166,7 @@ class Robotiq_Two_Finger_Gripper(object):
                                  socket_port=self.socket_port,
                                  socket_name=self.socket_name)
 
+        '''
         # Set input and output voltage ranges
         urscript._set_analog_inputrange(0, 0)
         urscript._set_analog_inputrange(1, 0)
@@ -173,8 +174,9 @@ class Robotiq_Two_Finger_Gripper(object):
         urscript._set_analog_inputrange(3, 0)
         urscript._set_analog_outputdomain(0, 0)
         urscript._set_analog_outputdomain(1, 0)
-        urscript._set_tool_voltage(24)
         urscript._set_runstate_outputs()
+        '''
+        urscript._set_tool_voltage(24)
 
         # Set payload, speed and force
         urscript._set_payload(self.payload)
@@ -185,7 +187,7 @@ class Robotiq_Two_Finger_Gripper(object):
         urscript._set_robot_activate()
         urscript._set_gripper_activate()
 
-        # Wait on activation to avoid USB conflicts
+        # Wait on activation to avoid USB conflictsb
         urscript._sleep(0.1)
 
         return urscript
@@ -197,7 +199,7 @@ class Robotiq_Two_Finger_Gripper(object):
         0 is open
         255 is closed
         """
-        #urscript = self._get_new_urscript()
+        urscript = self._get_new_urscript()
         
         # Move to the position
         sleep = 2.0
@@ -212,7 +214,7 @@ class Robotiq_Two_Finger_Gripper(object):
         time.sleep(sleep)
 
     def open_gripper(self):
-        self.gripper_action(50)
+        self.gripper_action(0)
 
     def close_gripper(self):
-        self.gripper_action(200)
+        self.gripper_action(255)
