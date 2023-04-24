@@ -29,10 +29,10 @@ async def btn_call(info: Request): # var_name: var_type
     print(req_info['call_id'])
     status = ''
     if req_info['call_id'] == 'q':
-            status = 'SUCCESS'
+            status = 'EXIT'
     else:
         nCallId = int(req_info['call_id'])
-        if nCallId > 0 and nCallId < 4:
+        if nCallId > 0 and nCallId < 4: # [only 1 to 3]
             print(nCallId)
             call = nCallId
             status = 'SUCCESS'

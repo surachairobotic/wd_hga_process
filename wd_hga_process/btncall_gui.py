@@ -98,23 +98,27 @@ class MainWindow(PageWindow):
 
 
     def UiComponents(self):
-        btn_call = QtWidgets.QPushButton("CALL")
-        btn_call.setStyleSheet("background-color: green")
+        #btn_call = QtWidgets.QPushButton("CALL")
+        #btn_call.setStyleSheet("background-color: green")
 
-        btn_1 = QtWidgets.QPushButton("GOTO_2")
-        btn_1.setStyleSheet("background-color: blue")
+        btn_1 = QtWidgets.QPushButton("GOTO_1")
+        btn_1.setStyleSheet("background-color: yellow")
 
-        btn_2 = QtWidgets.QPushButton("GOTO_3")
-        btn_2.setStyleSheet("background-color: yellow")
+        btn_2 = QtWidgets.QPushButton("GOTO_2")
+        btn_2.setStyleSheet("background-color: blue")
+
+        btn_3 = QtWidgets.QPushButton("GOTO_3")
+        btn_3.setStyleSheet("background-color: green")
         
         self.robotstateLabel = QtWidgets.QLabel("Robot Status : READY")
 
         hLayout = QtWidgets.QHBoxLayout()
-        hLayout.addWidget(pWidgets(btn_1, lambda: sendJson(2, ip_port=self.parent.ip_webserver)), 1)
-        hLayout.addWidget(pWidgets(btn_2, lambda: sendJson(3, ip_port=self.parent.ip_webserver)), 1)
+        hLayout.addWidget(pWidgets(btn_1, lambda: sendJson(1, ip_port=self.parent.ip_webserver)), 1)
+        hLayout.addWidget(pWidgets(btn_2, lambda: sendJson(2, ip_port=self.parent.ip_webserver)), 1)
+        hLayout.addWidget(pWidgets(btn_3, lambda: sendJson(3, ip_port=self.parent.ip_webserver)), 1)
 
         vLayout = QtWidgets.QVBoxLayout()
-        vLayout.addWidget(pWidgets(btn_call, lambda: sendJson(1, ip_port=self.parent.ip_webserver)), 1)
+        #vLayout.addWidget(pWidgets(btn_call, lambda: sendJson(1, ip_port=self.parent.ip_webserver)), 1)
         vLayout.addLayout(hLayout, 1)
         vLayout.addWidget(pWidgets(self.robotstateLabel), 1)
 
